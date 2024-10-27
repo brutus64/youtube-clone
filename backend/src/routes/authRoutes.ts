@@ -10,9 +10,6 @@ router.use(authMiddlware);
 router.post("/api/logout", (req:any, res:any) => {
 
 });
-router.post("/api/check-auth", (req:any, res:any) => {
-    
-});
 
 //something about Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll.
 router.get("/", (req:any, res:any) => {

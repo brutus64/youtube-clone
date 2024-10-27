@@ -35,4 +35,11 @@ router.post("/api/login", (req: any, res: any) => {
     
 });
 
+router.post("/api/check-auth", (req:any, res:any) => {
+    if(req.session && req.session.user) 
+        return res.status(200).json({"status":"OK", "isLoggedIn":true , "userId": req.session.user});
+    return res.status(200).json({"status":"OK", "isLoggedIn":false , "userId": null});
+});
+
+
 export default router;
