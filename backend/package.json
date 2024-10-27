@@ -8,7 +8,9 @@
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index",
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate"
+    "migrate": "drizzle-kit migrate",
+    "migration": "tsx src/db/migrate.ts",
+    "studio": "drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
