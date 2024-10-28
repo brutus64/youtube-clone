@@ -1,15 +1,13 @@
 //IMPORTS
 import 'dotenv/config';
 import express, { urlencoded } from 'express';
-import { db } from './drizzle/db';
-import { user } from './drizzle/schema';
-import { eq } from 'drizzle-orm';
-import crypto from 'crypto';
 import cors from 'cors';
+import PgSession from 'connect-pg-simple';
 import publicRoutes from './routes/publicRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import session from 'express-session';
-
+import pkg from 'pg';
+const {Pool} = pkg;
 
 //MIDDLEWARE
 const app = express();
@@ -21,8 +19,27 @@ app.use(cors( {
     credentials: true
 }))
 
-app.use(session())
+const pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL, 
+    max: 10 // Limit pool size for session management
+});
 
+app.use(session({
+    store: new (PgSession(session))({
+      pool: pgPool,
+      tableName: "session",
+      createTableIfMissing: true
+    }),
+    secret: 'hufgirh348931jio1', //some string
+    saveUninitialized: false,
+    resave: false,
+    cookie: { 
+      secure: false, //for http
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    }
+  }));
+  
 //ACTUAL ROUTES
 app.use('/api', publicRoutes);
 app.use('/api', authRoutes);
