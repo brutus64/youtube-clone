@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
 const Login = () => {
     const navigate = useNavigate();
-    const {login} = useAuth();
     const [loginInputs, setLoginInputs] = useState({
         username: '',
         password: '',
@@ -21,7 +19,6 @@ const Login = () => {
     const submitLogin = async (e: any) => {
         e.preventDefault();
         e.stopPropagation();
-        const user = loginInputs.username;
         
         try {
             const res = await axios.post(`http://thewang.cse356.compas.cs.stonybrook.edu/api/login`,loginInputs, {withCredentials: true})
@@ -31,7 +28,6 @@ const Login = () => {
                 setBottomMsg(res.data.message);
             else {
                 setBottomMsg("WELCOME");
-                login(user);
                 navigate("/");
             }
         }

@@ -11,7 +11,8 @@ const Thumbnail = ({vid}) => {
                 let reader = new window.FileReader();
                 reader.readAsDataURL(res.data);
                 reader.onload = function () {
-                    setThumbNailImage(reader.result);
+                    if (reader.result)
+                        setThumbNailImage(reader.result);
                 };
             });
             

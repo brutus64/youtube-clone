@@ -11,7 +11,7 @@ const Videolist = () => {
             try{
                 const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/adduser",{count:NUM_VIDEOS});
                 console.log(res);
-                setVideoIds(res);
+                setVideoIds(res.data);
             }
             catch(err){
                 console.error("Cannot fetch video ids");

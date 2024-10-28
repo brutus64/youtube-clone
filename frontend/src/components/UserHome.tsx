@@ -3,11 +3,15 @@
 import Videolist from "./Videolist";
 import { useState,useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
 
 const UserHome = () => {
-    const {auth,user} = useAuth();
+    const { isAuth, user, checkAuth } = useAuth();
+    useEffect(() => {
+        checkAuth();
+    }, [checkAuth]);
     
-    return auth ? (
+    return isAuth ? (
         <div id="home-page">
             <h1>Hello {user!.username}</h1>
             <Videolist />
