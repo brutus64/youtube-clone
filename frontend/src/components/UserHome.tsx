@@ -13,16 +13,16 @@ const UserHome = () => {
     
     return isAuth ? (
         <div id="home-page">
-            <h1>Hello {user!.username}</h1>
+            <h1>Hello {user!}</h1>
             <Videolist />
         </div>
     )
     : (
         <div id='home-page'>
             <h1>Welcome! Please sign in</h1>
-            <Link to="login">Login</Link>
+            <Link to="login" className="Link">Login</Link>
             <br />
-            <Link to="signup">Sign up</Link>
+            <Link to="signup" className="Link">Sign up</Link>
         </div>
     );
 }

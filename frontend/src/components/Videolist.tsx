@@ -9,7 +9,7 @@ const Videolist = () => {
     useEffect(() => {
         const fetchVideoIds = async () => {
             try{
-                const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/adduser",{count:NUM_VIDEOS});
+                const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/video",{count:NUM_VIDEOS});
                 console.log(res);
                 setVideoIds(res.data);
             }
@@ -20,11 +20,11 @@ const Videolist = () => {
         fetchVideoIds();
     },[]);
     return (
-        <>
+        <div className="thumbnail-list-box">
             {videosIds.map(id =>
                 <Thumbnail key={id} vid={id}/>
             )}
-        </>
+        </div>
     )
 }
 

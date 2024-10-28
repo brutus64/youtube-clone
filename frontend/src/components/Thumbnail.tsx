@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
+
 const Thumbnail = ({vid}) => {
-    const [ thumbnailImage, setThumbNailImage ] = useState();
+    const [ thumbnailImage, setThumbNailImage ] = useState<string>("");
+    const navigate = useNavigate();
     useEffect(() => {
         const fetchThumbnail = async () => {
             axios.get(`http://thewang.cse356.compas.cs.stonybrook.edu/api/thumbnail/${vid}`,{responseType: 'blob'})
@@ -12,17 +15,27 @@ const Thumbnail = ({vid}) => {
                 reader.readAsDataURL(res.data);
                 reader.onload = function () {
                     if (reader.result)
-                        setThumbNailImage(reader.result);
+                        setThumbNailImage(reader.result.toString());
+                    else
+                        console.log("Reader error")
                 };
+            })
+            .catch((err) => {
+                console.log(`Could not fetch video thumbnail ${vid}`);
             });
             
         }
         fetchThumbnail();
     },[]);
+
+    const handleVideoClick = () => {
+        navigate(`/play/${vid}`);
+    }
+
     return (
-        <>
-            <img src="" alt="" />
-        </>
+        <div className="thumbnail-box" onClick={handleVideoClick}>
+            <img src={thumbnailImage} alt="thumbnail image" />
+        </div>
     )
 }
 
