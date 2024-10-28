@@ -17,7 +17,7 @@ router.post('/adduser', async (req: any, res: any) => {
 
         //if there is a user already, return error
         if(user_query.length > 0)
-            return res.status(200).json({"status": "ERROR","error":true,"message":"email already exists"});
+            return res.status(200).json({status: "ERROR",error:true,message:"email already exists"});
 
         //otherwise create a verification key for it and insert into db
         const key = crypto.randomBytes(16).toString("hex");
@@ -30,9 +30,9 @@ router.post('/adduser', async (req: any, res: any) => {
 
         // need to send the email here
         sendEmail(email,key);
-        return res.status(200).json({"status":"OK"})
+        return res.status(200).json({status:"OK"})
     } catch(err) {
-        return res.status(200).json({"status":"ERROR","error":true,"message":"/api/adduser internal issue"});
+        return res.status(200).json({status:"ERROR",error:true,message:"/api/adduser internal issue"});
     }
 });
 
@@ -84,12 +84,12 @@ router.post("/login", async (req: any, res: any) => {
         )
         
         if(user_query.length == 0)
-            return res.status(200).json({"status":"ERROR",error:true,message:"log in request failed, either wrong info or disabled account or non-existent"})
+            return res.status(200).json({status:"ERROR",error:true,message:"log in request failed, either wrong info or disabled account or non-existent"})
         console.log(user_query[0]);
         req.session.user = user_query[0].username;
-        return res.status(200).json({"status":"OK"});
+        return res.status(200).json({status:"OK"});
     } catch(err) {
-        return res.status(200).json({"status":"ERROR",error:true,message:"internal error to /login"});
+        return res.status(200).json({status:"ERROR",error:true,message:"internal error to /login"});
     }
 });
 
@@ -97,10 +97,10 @@ router.post("/check-auth", (req:any, res:any) => {
     try{
         console.log("req from /api/check-auth:", req);
         if(req.session && req.session.user) 
-            return res.status(200).json({"status":"OK", "isLoggedIn":true , "userId": req.session.user});
-        return res.status(200).json({"status":"OK", "isLoggedIn":false , "userId": null});
+            return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user});
+        return res.status(200).json({status:"OK", isLoggedIn:false , userId: null});
     } catch(err) {
-        return res.status(200).json({"status":"ERROR",error:true,"message":"check-auth internal server error"})
+        return res.status(200).json({status:"ERROR",error:true,message:"check-auth internal server error"})
     }
 });
 

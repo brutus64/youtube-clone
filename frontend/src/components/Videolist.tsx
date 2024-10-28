@@ -14,7 +14,7 @@ const Videolist = () => {
                 setVideoIds(res.data);
             }
             catch(err){
-                console.error("Cannot fetch video ids");
+                console.error("Cannot fetch video ids: ", err);
             }
         }
         fetchVideoIds();

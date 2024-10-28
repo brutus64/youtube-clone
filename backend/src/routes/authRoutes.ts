@@ -7,41 +7,48 @@ router.use(authMiddlware);
 
 //AuthRoutes
 
-router.post("/logout", (req:any, res:any) => {
-    try{
-        //must already be logged in and remove the session
-        if(req.session){
-          req.session.destroy((err:any) => {
-            if(err)
-              return res.status(200).json({status: "ERROR", error:true,message:"cannoy destroy session"});
-            return res.status(200).json({status: "OK"});
-          });
-        }
-    } catch(err) {
-        return res.status(200).json({status: "ERROR", error:true,message:"internal error to /logout"});
+router.post("/logout", (req: any, res: any) => {
+  try {
+    //must already be logged in and remove the session
+    if (req.session) {
+      req.session.destroy((err: any) => {
+        if (err)
+          return res
+            .status(200)
+            .json({
+              status: "ERROR",
+              error: true,
+              message: "cannoy destroy session",
+            });
+        return res.status(200).json({ status: "OK" });
+      });
     }
+  } catch (err) {
+    return res
+      .status(200)
+      .json({
+        status: "ERROR",
+        error: true,
+        message: "internal error to /logout",
+      });
+  }
 });
 
 //something about Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll. I believe this to be a frontend thing since there's no /api
 // router.get("/", (req:any, res:any) => {
-    
+
 // });
 
 //parameter in body count req.body
-router.post("/videos", (req:any, res:any) => {
-    
-});
+router.post("/videos", (req: any, res: any) => {});
 
-router.get("/manifest/:id", (req:any, res:any) => {
-    
-});
+router.get("/manifest/:id", (req: any, res: any) => {});
 
-router.get("/thumbnail/:id", (req:any, res:any) => {
-    
-});
+router.get("/thumbnail/:id", (req: any, res: any) => {});
 
-router.get("/play/:id", (req:any, res:any) => {
-    
-});
+//also a frontend concern where it displays a page.
+// router.get("/play/:id", (req:any, res:any) => {
+
+// });
 
 export default router;

@@ -11,7 +11,7 @@ const Thumbnail = ({vid}) => {
         const fetchThumbnail = async () => {
             axios.get(`http://thewang.cse356.compas.cs.stonybrook.edu/api/thumbnail/${vid}`,{responseType: 'blob'})
             .then((res) => {
-                let reader = new window.FileReader();
+                const reader = new window.FileReader();
                 reader.readAsDataURL(res.data);
                 reader.onload = function () {
                     if (reader.result)
@@ -26,7 +26,7 @@ const Thumbnail = ({vid}) => {
             
         }
         fetchThumbnail();
-    },[]);
+    },[vid]);
 
     const handleVideoClick = () => {
         navigate(`/play/${vid}`);
