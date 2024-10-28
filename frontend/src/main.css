@@ -1,7 +1,7 @@
 body {
     margin:0;
     background-color: #EEEEEE;
-    font-family: luminari, fantasy;
+    font-family: Papyrus, fantasy;
 }
 
 h1 {
@@ -47,4 +47,25 @@ button:active{
 
 #home-page {
     margin:10px;
+    text-align: center;
+}
+
+#home-page > h1 {
+    font-size:36px;
+}
+
+.Link {
+    color:red;
+    font-size:30px;
+}
+.thumbnail-list-box {
+    display:grid;
+}
+
+/* 16:9 */
+.thumbnail-box {
+    padding:10px;
+    margin:20px;
+    width:160px;
+    height:90px;
 }
