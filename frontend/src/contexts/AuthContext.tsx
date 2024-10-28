@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: AuthContextProps) => {
     const [user, setUser] = useState<string | null>(null);
     const checkAuth = async() => {
         try {
-            const res = await axios.get('thewang.cse356.compas.cs.stonybrook.edu/api/check-auth', {withCredentials: true});
+            const res = await axios.post('http://thewang.cse356.compas.cs.stonybrook.edu/api/check-auth', {withCredentials: true});
             if (res.data.isLoggedIn == true) {
                 setAuth(true);
                 setUser(res.data.userId);
