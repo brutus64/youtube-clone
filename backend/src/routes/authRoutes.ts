@@ -22,10 +22,10 @@ router.post("/api/logout", (req:any, res:any) => {
     }
 });
 
-//something about Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll.
-router.get("/", (req:any, res:any) => {
+//something about Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll. I believe this to be a frontend thing since there's no /api
+// router.get("/", (req:any, res:any) => {
     
-});
+// });
 
 //parameter in body count req.body
 router.post("/api/videos", (req:any, res:any) => {
