@@ -8,7 +8,7 @@ import { sendEmail } from '../email';
 const router = Router();
 
 //ROUTES
-router.post('/api/adduser', async (req: any, res: any) => {
+router.post('/adduser', async (req: any, res: any) => {
     try{
         const { username, password, email } = req.body;
 
@@ -32,11 +32,11 @@ router.post('/api/adduser', async (req: any, res: any) => {
         sendEmail(email,key);
         return res.status(200).json({"status":"OK"})
     } catch(err) {
-        return res.status(200).json({"status":"ERROR","error":true,"message":"/api/adduser internal issue"});
+        return res.status(200).json({"status":"ERROR","error":true,"message":"/adduser internal issue"});
     }
 });
 
-router.get("/api/verify", async (req: any, res: any) => {
+router.get("/verify", async (req: any, res: any) => {
     try{
         const {email, key} = req.query;
         console.log("email", email);
@@ -70,7 +70,7 @@ router.get("/api/verify", async (req: any, res: any) => {
 });
 
 //login does not require a session to already exist, only when logging out it does.
-router.post("/api/login", async (req: any, res: any) => {
+router.post("/login", async (req: any, res: any) => {
     try{
         const { username, password } = req.body;
 
@@ -93,9 +93,9 @@ router.post("/api/login", async (req: any, res: any) => {
     }
 });
 
-router.post("/api/check-auth", (req:any, res:any) => {
+router.post("/check-auth", (req:any, res:any) => {
     try{
-        console.log("req from /api/check-auth:", req);
+        console.log("req from /check-auth:", req);
         if(req.session && req.session.user) 
             return res.status(200).json({"status":"OK", "isLoggedIn":true , "userId": req.session.user});
         return res.status(200).json({"status":"OK", "isLoggedIn":false , "userId": null});

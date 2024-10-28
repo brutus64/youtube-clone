@@ -7,7 +7,7 @@ router.use(authMiddlware);
 
 //AuthRoutes
 
-router.post("/api/logout", (req:any, res:any) => {
+router.post("/logout", (req:any, res:any) => {
     try{
         //must already be logged in and remove the session
         if(req.session){
@@ -28,15 +28,15 @@ router.post("/api/logout", (req:any, res:any) => {
 // });
 
 //parameter in body count req.body
-router.post("/api/videos", (req:any, res:any) => {
+router.post("/videos", (req:any, res:any) => {
     
 });
 
-router.get("/api/manifest/:id", (req:any, res:any) => {
+router.get("/manifest/:id", (req:any, res:any) => {
     
 });
 
-router.get("/api/thumbnail/:id", (req:any, res:any) => {
+router.get("/thumbnail/:id", (req:any, res:any) => {
     
 });
 

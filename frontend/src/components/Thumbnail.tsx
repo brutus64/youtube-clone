@@ -21,7 +21,7 @@ const Thumbnail = ({vid}) => {
                 };
             })
             .catch((err) => {
-                console.log(`Could not fetch video thumbnail ${vid}`);
+                console.log(`Error fetching video thumbnail ${vid}: ${err}`);
             });
             
         }

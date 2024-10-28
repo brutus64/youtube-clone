@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 export function sendEmail(email: string, key: string) {
   const encoded_email = encodeURIComponent(email);
   const encoded_key = encodeURIComponent(key);
-  const encoded = `http://${HOSTNAME}/verify?email=${encoded_email}&key=${encoded_key}`;
+  const encoded = `http://${HOSTNAME}/api/verify?email=${encoded_email}&key=${encoded_key}`;
     const mailOptions = {
         from: `donotreply@${HOSTNAME}`,
         to: email,
