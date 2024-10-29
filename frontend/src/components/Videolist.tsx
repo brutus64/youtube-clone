@@ -10,7 +10,7 @@ const Videolist = () => {
         const fetchVideoIds = async () => {
             try{
                 const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/video",{count:NUM_VIDEOS});
-                console.log(res);
+                console.log(res.data);
                 setVideoIds(res.data);
             }
             catch(err){

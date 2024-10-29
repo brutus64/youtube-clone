@@ -60,6 +60,7 @@ router.get("/verify", async (req: any, res: any) => {
         if(user_query.length > 0){
           await db.update(user).set({disabled:false}).where(eq(user.email, email)); //find the email and set the disabled to false
           console.log(email, "updated to have disable: false");
+        //   return res.redirect("http://thewang.cse356.compas.cs.stonybrook.edu/");
           return res.send({status:"OK"});
         }
         //otherwise return error
@@ -95,7 +96,7 @@ router.post("/login", async (req: any, res: any) => {
 
 router.post("/check-auth", (req:any, res:any) => {
     try{
-        console.log("req from /api/check-auth:", req);
+        console.log("req from /api/check-auth:", req.session);
         if(req.session && req.session.user) 
             return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user});
         return res.status(200).json({status:"OK", isLoggedIn:false , userId: null});
@@ -103,6 +104,5 @@ router.post("/check-auth", (req:any, res:any) => {
         return res.status(200).json({status:"ERROR",error:true,message:"check-auth internal server error"})
     }
 });
-
 
 export default router;

@@ -28,11 +28,13 @@ router.post("/logout", (req: any, res: any) => {
 
 // });
 
-//parameter in body count req.body
+// parameter in body count req.body
 router.post("/videos", (req: any, res: any) => {
     try{
         const { count } = req.body;
-        const jsonPath = path.join(__dirname, "../../../media","m1.json")
+        // const jsonPath = path.join(__dirname, "../../../media","m1.json")
+        const jsonPath = '/var/html/media/m1.json'
+        console.log("jsonPath:", jsonPath);
         fs.readFile(jsonPath, "utf-8", (err, data) => {
             if(err)
                 return res.status(200).json({status:"ERROR",error:true,message:"fs.readFile errored inside."});
@@ -56,10 +58,11 @@ router.get("/manifest/:id", (req: any, res: any) => {
     try{
         const id = req.params.id;
         //__dirname is current directory
-        const manifestPath = path.join(__dirname, "../../../media/dash", `output_${id}.mpd`);
+        const manifestPath = `/var/html/media/output_${id}.mpd`;
         console.log("manifest path:", manifestPath);
+        console.log("EXISTS?", fs.existsSync(manifestPath));
         if(fs.existsSync(manifestPath)) 
-            return res.sendFile(manifestPath);
+            return res.sendFile(manifestPath, { headers: { 'Content-Type': 'application/xml'}});
         return res.status(200).json({status:"ERROR",error:true,message:"manifest not found. for /api/manifest/:id"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from /api/manifest/:id most likely the manifestPath attempt to read does not work"});
@@ -70,7 +73,8 @@ router.get("/manifest/:id", (req: any, res: any) => {
 router.get("/thumbnail/:id", (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = path.join(__dirname, "../../../media/jpg", `${id}.jpg`);
+        const thumbnailPath = `/var/html/media/${id}.jpg`;
+        // const thumbnailPath = path.join(__dirname, "../../../media/jpg", `${id}.jpg`);
         console.log("thumbnail path:", thumbnailPath);
         if(fs.existsSync(thumbnailPath))
             return res.sendFile(thumbnailPath);
@@ -79,6 +83,7 @@ router.get("/thumbnail/:id", (req: any, res: any) => {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from api/thumbnail/:id most likely the thumbnailPath attempts to read does not work"});
     }
 });
+
 //also a frontend concern where it displays a page.
 // router.get("/play/:id", (req:any, res:any) => {
 
