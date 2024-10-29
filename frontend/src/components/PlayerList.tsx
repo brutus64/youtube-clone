@@ -4,39 +4,55 @@ import VideoPlayer from "./VideoPlayer";
 import { debounce } from "../viewings/debounce";
 import axios from "axios";
 
-// 7. GET /play/:id
-// Return a frontend video player that can play video with id :id
 const PlayerList = () => {
-    const { id } = useParams(); //id of the first video
-    const [ loading, setLoading] = useState(false);
-    const [ vidList, setVidList ] = useState([id]);
-    const fetchVideoId = async () => {  // Runs twice for some reason
+    const { id } = useParams(); // ID of the first video
+    const [loading, setLoading] = useState(false);
+    const [manifestUrls, setManifestUrls] = useState({});
+    const [vidList, setVidList] = useState([id]);
 
-        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:1});
-
-
-        setVidList([...vidList, /* ADD NEW VIDEO HERE*/ ]);
-        setLoading(false);
-    }
-    
-    const handleScroll = () => {
+    const handleScroll = debounce(() => {
         if (document.body.scrollHeight - 10 < window.scrollY + window.innerHeight) {
             setLoading(true);
         }
-    };
-    window.addEventListener("scroll", debounce(handleScroll, 500));
+    }, 500);
 
+    // Fetch the manifest for the video and add to vidList if unique
     useEffect(() => {
-        fetchVideoId();
-    }, [loading]);
+        const fetchVideoManifest = async () => {
+            if (!loading) return;
+            try {
+                const res = await axios.post(`http://thewang.cse356.compas.cs.stonybrook.edu/api/manifest/${id}`, { responseType: 'blob' });
+                const manifestUrl = URL.createObjectURL(res.data);
+                if(!vidList.includes(manifestUrl)) {
+                    setVidList((prev) => [...prev, id]);
+                    if(typeof id == "string")
+                        setManifestUrls((prev) => ({ ...prev, [id]: manifestUrl }));
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching manifest:", error);
+                setLoading(false);
+            } 
+        };
+        fetchVideoManifest();
+    }, [loading, id, vidList]);
 
-    return ( //Handle the case where video ids may not be unique (return same video twice)
+    // Add scroll event listener
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [handleScroll]);
+    console.log("video list: ", vidList);
+    console.log("manifest Urls, ", manifestUrls);
+    return (
         <div className="video-list">
-            {vidList.map(id =>
-                <VideoPlayer key={id} vid={id}/>
-            )}
+            {vidList.map((vidId) => (
+                <VideoPlayer key={vidId} manifest = { typeof vidId == "string" ? manifestUrls[vidId]: null} />
+            ))}
         </div>
-    )
+    );
 };
 
 export default PlayerList;

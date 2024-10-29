@@ -1,20 +1,29 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useVisible } from "../viewings/useVisible";
+import { useState } from 'react';
+import ReactPlayer from 'react-player'
+const VideoPlayer = ({ manifest }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    console.log("Video player's manifest", manifest);
 
-
-const VideoPlayer = ({vid}) => {
-    const [ elementRef ] = useVisible(vid);
-
-    //fetch actual video somewhere here
+    const handlePlayPause = () => {
+      if(isPlaying) {
+        setIsPlaying(false);
+      }
+      else {
+        setIsPlaying(true);
+      }
+    };
 
     return (
-        <div className="video-box" ref={elementRef}>
-            {vid}
+    <>
+        <ReactPlayer 
+          playing={isPlaying}
+          url={manifest}
+          controls={true}
+        />
+        <div id="playPauseBtn">
+          <button onClick={handlePlayPause}>Play, Plause</button>
         </div>
+    </>
     )
 }
-
-
 export default VideoPlayer;
