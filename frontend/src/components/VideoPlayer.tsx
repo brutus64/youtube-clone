@@ -17,7 +17,7 @@ const VideoPlayer = ({ manifest }) => {
     <>
         <ReactPlayer 
           playing={isPlaying}
-          url={manifest}
+          url={"/media/output_"+manifest+".mpd"}
           controls={true}
         />
         <div id="playPauseBtn">
