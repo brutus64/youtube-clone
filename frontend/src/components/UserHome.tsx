@@ -1,6 +1,6 @@
 //requires a logout button for our own testing purposes
 //may require other components like a modularized component with media player
-import VideoList from "./Videolist";
+import VideoList from "./VideoList";
 
 const UserHome = () => {
     return (
