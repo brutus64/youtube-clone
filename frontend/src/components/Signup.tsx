@@ -73,7 +73,7 @@ const Signup = () => {
                     <button className="submit-button" onClick={submitSignup}>Sign up</button>
                 </div>
                 <div>
-                    <Link to="/login">I have an account already</Link>
+                    <Link to="/">I have an account already</Link>
                 </div>
                 <div>
                     {bottomMsg}

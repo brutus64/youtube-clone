@@ -4,17 +4,27 @@ import Thumbnail from "./Thumbnail";
 
 const NUM_VIDEOS = 10;
 
-const Videolist = () => {
-    const [videosIds, setVideoIds] = useState([]);
+const VideoList = () => {
+    const [videosIds, setVideoIds] = useState<string[]>([]);
+    // GET  "/"
+    // Display a list of 10 videos with their corresponding thumbnails
+    // Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll.
     useEffect(() => {
         const fetchVideoIds = async () => {
             try{
-                const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/video",{count:NUM_VIDEOS});
+                const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:NUM_VIDEOS});
                 console.log(res.data);
-                setVideoIds(res.data);
+                //for each object we just want id, other info kind of useless unless we need description and video titles I guess.
+                const ids = res.data.videos.map(value => value.id);
+                setVideoIds(ids);
+                // A mapping of 
+                // {   id: STRING without the .mp4,
+                //     title: STRING (technically file) with .mp4, 
+                //     descriptions: STRING describing video 
+                // }
             }
             catch(err){
-                console.error("Cannot fetch video ids: ", err);
+                console.log("Cannot fetch video ids: ", err);
             }
         }
         fetchVideoIds();
@@ -28,4 +38,4 @@ const Videolist = () => {
     )
 }
 
-export default Videolist;
+export default VideoList;

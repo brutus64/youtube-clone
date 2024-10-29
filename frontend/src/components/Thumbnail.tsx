@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+//sends you the file right away for the thumbnail, no need to access /var/html/media
+//just need to be able to parse it, but does it have the ability to?
+//or does it need source from /var/html/media still?
 
 
 const Thumbnail = ({vid}) => {
@@ -9,12 +11,15 @@ const Thumbnail = ({vid}) => {
     const navigate = useNavigate();
     useEffect(() => {
         const fetchThumbnail = async () => {
+            //expects id without .jpg which is exactly what it does.
             axios.get(`http://thewang.cse356.compas.cs.stonybrook.edu/api/thumbnail/${vid}`,{responseType: 'blob'})
             .then((res) => {
-                const reader = new window.FileReader();
-                reader.readAsDataURL(res.data);
+                //blob = Binary Large Object (files are represented in binary or raw data)
+                const reader = new window.FileReader(); //can read File/Blob objects, create a FileReader
+                reader.readAsDataURL(res.data); //reads Blob and turns into Data URL (DataURL = base64 encoded string which is the binary data of Blob)
                 reader.onload = function () {
                     if (reader.result)
+                        //stores thumbnail as a URL
                         setThumbNailImage(reader.result.toString());
                     else
                         console.log("Reader error")
@@ -28,12 +33,9 @@ const Thumbnail = ({vid}) => {
         fetchThumbnail();
     },[vid]);
 
-    const handleVideoClick = () => {
-        navigate(`/play/${vid}`);
-    }
-
     return (
-        <div className="thumbnail-box" onClick={handleVideoClick}>
+        <div className="thumbnail-box" onClick={()=>navigate(`/play/${vid}`)}>
+            {/* its a Data URL so it decodes base64 string to render the image, image is able to recognize its a Data URL by the serquence of bytes as it says <mediatype>[base64] like data:image/png;base64,(encoded stuff) to be decoded*/}
             <img src={thumbnailImage} alt="thumbnail image" />
         </div>
     )

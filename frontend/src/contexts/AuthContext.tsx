@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: AuthContextProps) => {
         try {
             const res = await axios.post('http://thewang.cse356.compas.cs.stonybrook.edu/api/check-auth', {withCredentials: true});
             if (res.data.isLoggedIn == true) {
+                console.log("logged in, showing returned obj: ", res.data);
                 setAuth(true);
                 setUser(res.data.userId);
             }

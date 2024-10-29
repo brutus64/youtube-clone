@@ -4,6 +4,9 @@ import VideoPlayer from "./VideoPlayer";
 import { debounce } from "../viewings/debounce";
 import axios from "axios";
 
+// 7. GET /play/:id
+// Return a frontend video player that can play video with id :id
+
 const PlayerList = () => {
     const { id } = useParams(); //id of the first video
     const [ loading, setLoading] = useState(false);

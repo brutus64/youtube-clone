@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from '../contexts/useAuth';
 const Login = () => {
+    const { checkAuth } = useAuth();
     const navigate = useNavigate();
     const [loginInputs, setLoginInputs] = useState({
         username: '',
@@ -28,6 +30,7 @@ const Login = () => {
                 setBottomMsg(res.data.message);
             else {
                 setBottomMsg("WELCOME");
+                checkAuth();
                 navigate("/");
             }
         }
