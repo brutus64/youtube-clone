@@ -60,12 +60,44 @@ button:active{
 }
 .thumbnail-list-box {
     display:grid;
+    overflow:auto;
+    gap:5px;
+    padding:10px;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
 }
 
 /* 16:9 */
 .thumbnail-box {
-    padding:10px;
+    padding:5px;
     margin:20px;
-    width:160px;
-    height:90px;
+    width:376px;
+    height:212px;
+    box-sizing: border-box;
+    border: black solid 1px;
+    background-color: lightblue;
+}
+
+.video-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.video-box {
+    padding:5px;
+    margin:20px;
+    width:940px;
+    height:530px;
+    box-sizing: border-box;
+    border: black solid 1px;
+    background-color: lightblue;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size:300px;
+}
+
+#big {
+    height: 70vh;
 }
