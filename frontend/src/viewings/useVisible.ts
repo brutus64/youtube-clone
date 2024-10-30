@@ -6,12 +6,14 @@ export const useVisible = (id) => {
     const handleURLUpdate = () => {
         window.history.replaceState(null, "Utwob", `/play/${id}`);
     }
+    
+    const debouncedHandleURLUpdate = debounce(handleURLUpdate, 1500);
+
     const IOCallback = (entries) => {
         const [ entry ] = entries;
         if (entry.isIntersecting) {
             console.log(`Changing url: ${id}`);
-            handleURLUpdate();
-            debounce(handleURLUpdate,1500);
+            debouncedHandleURLUpdate();
         }
     }
 
