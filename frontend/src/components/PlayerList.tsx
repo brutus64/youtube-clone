@@ -1,90 +1,69 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
-import { debounce } from "../viewings/debounce";
 import axios from "axios";
 
 const PlayerList = () => {
     const { id } = useParams<{ id:string }>(); // ID of the first video
-    const [loading, setLoading] = useState(true);
-    const [manifestUrls, setManifestUrls] = useState<{ [key: string]: string }>({});
-    const [ currentIndex, setCurrentIndex ] = useState(0);
-    const [ yPageOffset , setYPageOffset] = useState(0);
-    const [vidList, setVidList] = useState<string[]>([id]);
-    const isScrollingRef = useRef(false);
+    const navigate = useNavigate();
+    const videoref = useRef({vidList:[""],ind:0});
 
     const fetchVideoId = async () => {  // Runs twice for some reason
         const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:1});
-        console.log(res)
-        setVidList([...vidList, res.data.videos[0].id]);
-        setLoading(false);
+        // //console.log(res)
+        return res.data.videos[0].id;
     }
 
-    useEffect(() => {
-        if (loading)
-            fetchVideoId();
-    }, [loading]);
-
-    const handleScroll = debounce(() => {
-        if (isScrollingRef.current) return;
-        console.log(document.body.scrollHeight - 10, window.scrollY + window.innerHeight)
-        if (document.body.scrollHeight - 10 < window.scrollY + window.innerHeight) {
-            setLoading(true);
+    const handleWheel = async (event:any) => {
+        if (event.deltaY < 0) {
+            //console.log("UP")
+            // check if previous page exists
+            if (videoref.current.ind != 0) {
+                videoref.current.ind -= 1;
+                navigate(`/play/${videoref.current.vidList[videoref.current.ind]}`);
+            }
         }
-        const cur = window.scrollY;
-        const difference = cur - yPageOffset;
-        console.log("Current scroll",difference);
-        if (difference > 0 && currentIndex < vidList.length-1)
-            setCurrentIndex(prev => prev+1);
-        else if (difference < 0 && currentIndex > 0)
-            setCurrentIndex(prev => prev-1);
-        setYPageOffset(cur);
-    }, 500);
+        else {
+            //console.log("DOWN")
+            // check if next page exists
+            
+            if (videoref.current.ind !== videoref.current.vidList.length-1) {
+                videoref.current.ind += 1;
+                navigate(`/play/${videoref.current.vidList[videoref.current.ind]}`);
+            }
+            else {// else load new random video and then navigate
+                const newid = await fetchVideoId();
+                videoref.current.vidList.push(newid);
+                videoref.current.ind += 1;
+                //console.log("next ",nextState)
+                navigate(`/play/${newid}`);
+            }
+            
+        }
+    }
 
-    // Fetch the manifest for the video and add to vidList if unique
-    // useEffect(() => {
-    //     const fetchVideoManifest = async () => {
-    //         if (!loading || !id) return;
-    //         try {
-    //             const res = await axios.get(`http://thewang.cse356.compas.cs.stonybrook.edu/api/manifest/${id}`, {responseType: "text"});
-    //             console.log("res.data from manifest/id" ,res.data);
-    //             const manifestUrl = URL.createObjectURL(res.data);
-    //             console.log("manifest URL:", manifestUrl)
-    //             if(!vidList.includes(id)) {
-    //                 setVidList((prev) => [...prev, id]);
-    //                 setManifestUrls((prev) => ({ ...prev, [id]: manifestUrl }));
-    //             }
-    //             setLoading(false);
-    //         } catch (error) {
-    //             console.error("Error fetching manifest:", error);
-    //             setLoading(false);
-    //         } 
-    //     };
-    //     fetchVideoManifest();
-    // }, [loading, id, vidList]);
-    useEffect(()=> {
-        fetchVideoId();
+    
+    
+    useEffect(() => { //clear state on page reload
+        console.log("reload")
+        videoref.current.vidList = [id];
+        videoref.current.ind = 0;
     }, []);
-
-    // Add scroll event listener
+    
     useEffect(() => {
-        window.addEventListener("scroll", handleScroll);
+        //console.log("Event listener added")
+        window.addEventListener("wheel", handleWheel);
         return () => {
-            window.removeEventListener("scroll", handleScroll);
+            //console.log("Event listener removed")
+            window.removeEventListener("wheel", handleWheel);
         };
-    }, [handleScroll]);
-    console.log("video list: ", vidList);
-    console.log("manifest Urls, ", manifestUrls);
+    }, []);
+    // //console.log("video list: ", vidList);
+    // //console.log("manifest Urls, ", manifestUrls);
+    //console.log(location);
     return (
-        // <div className="video-list">
-        //     {vidList.map((vidId) => (
-        //         <VideoPlayer key={vidId} manifest = {manifestUrls[vidId]} />
-        //     ))}
-        // </div>
         <div className="video-list">
-            {vidList.map((vidId,i) => (
-                <VideoPlayer key={`${vidId}${i}`} handle={handleScroll} isCur={i==currentIndex} manifest = {vidId} />
-            ))}
+            <VideoPlayer manifest={id} />
         </div>
     );
 };

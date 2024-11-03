@@ -30,6 +30,21 @@ router.post("/logout", (req: any, res: any) => {
 
 // parameter in body count req.body
 router.post("/videos", (req: any, res: any) => {
+    function shuffle(array:any) {
+        let currentIndex = array.length;
+      
+        // While there remain elements to shuffle...
+        while (currentIndex != 0) {
+      
+          // Pick a remaining element...
+          let randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+      
+          // And swap it with the current element.
+          [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+        }
+      }
     try{
         const { count } = req.body;
         // const jsonPath = path.join(__dirname, "../../../media","m1.json")
@@ -45,6 +60,7 @@ router.post("/videos", (req: any, res: any) => {
                 title: key,
                 description: videos[key],
             }));
+            shuffle(vid_arr);
             const ret_arr = vid_arr.slice(0,count);
             //do i need to return status OK?
             return res.status(200).json({status:"OK", videos:ret_arr})

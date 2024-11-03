@@ -74,7 +74,7 @@ button:active{
     height:212px;
     box-sizing: border-box;
     border: black solid 1px;
-    background-color: lightblue;
+    background-color: #DBF9F4;
 }
 
 .video-list {
@@ -89,15 +89,19 @@ button:active{
     width:940px;
     height:530px;
     box-sizing: border-box;
-    border: black solid 1px;
-    background-color: lightblue;
+    
+    background-color: rgb(225, 248, 255);
 
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size:300px;
+    gap:10px;
+    /* font-size:300px; */
+    border-radius: 20px;
 }
 
-#big {
-    height: 70vh;
+#playPauseBtn > button {
+    width: 200px;
+    
 }

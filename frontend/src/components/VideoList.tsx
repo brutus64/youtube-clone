@@ -11,6 +11,7 @@ const VideoList = () => {
     // Clicking on a video should link to that video, at /play/:id , with the ability to infinitely scroll.
     useEffect(() => {
         const fetchVideoIds = async () => {
+            console.log("Fetching videos...")
             try{
                 const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:NUM_VIDEOS});
                 console.log(res.data);
