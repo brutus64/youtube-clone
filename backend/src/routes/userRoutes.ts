@@ -4,7 +4,7 @@ import { user } from '../drizzle/schema';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
 import { sendEmail } from '../email';
-
+import { authMiddlware } from '../middleware/auth';
 const router = Router();
 
 //ROUTES
@@ -103,6 +103,26 @@ router.post("/check-auth", (req:any, res:any) => {
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"check-auth internal server error"})
     }
+});
+
+//----------------------------------------AUTH ROUTES--------------------------------------------
+router.use(authMiddlware);
+
+//AuthRoutes
+
+router.post("/logout", (req: any, res: any) => {
+  try {
+    //must already be logged in and remove the session
+    if (req.session) {
+      req.session.destroy((err: any) => {
+        if (err)
+          return res.status(200).json({status: "ERROR",error: true,message: "cannoy destroy session",});
+        return res.status(200).json({ status: "OK" });
+      });
+    }
+  } catch (err) {
+    return res.status(200).json({status: "ERROR",error: true,message: "internal error to /logout",});
+  }
 });
 
 export default router;

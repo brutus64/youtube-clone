@@ -1,4 +1,4 @@
-import { useState,useEffect, useRef } from 'react';
+import { useState } from 'react';
 import ReactPlayer from 'react-player'
 // import { useVisible } from '../viewings/useVisible';
 const VideoPlayer = ({ manifest}) => {

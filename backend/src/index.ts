@@ -3,8 +3,8 @@ import 'dotenv/config';
 import express, { urlencoded } from 'express';
 import cors from 'cors';
 import PgSession from 'connect-pg-simple';
-import publicRoutes from './routes/publicRoutes.js';
-import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import fileRoutes from './routes/fileRoute.js';
 import session from 'express-session';
 import pkg from 'pg';
 const {Pool} = pkg;
@@ -41,8 +41,8 @@ app.use(session({
 }));
   
 //ACTUAL ROUTES
-app.use('/api', publicRoutes);
-app.use('/api', authRoutes);
+app.use('/api', userRoutes);
+app.use('/api', fileRoutes);
 
 
 app.get("/media/:mpeg", authMiddlware, (req: any, res: any) => {
