@@ -4,7 +4,7 @@ import express, { urlencoded } from 'express';
 import cors from 'cors';
 import PgSession from 'connect-pg-simple';
 import userRoutes from './routes/userRoutes.js';
-import fileRoutes from './routes/fileRoute.js';
+import fileRoutes from './routes/fileRoutes.js';
 import session from 'express-session';
 import pkg from 'pg';
 const {Pool} = pkg;
