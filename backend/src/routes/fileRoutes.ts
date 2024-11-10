@@ -24,7 +24,7 @@ router.post("/videos", (req: any, res: any) => {
       }
     try{
         const { count } = req.body;
-        const jsonPath = '/var/html/media/m1.json'
+        const jsonPath = '/var/html/media/m2.json'
         console.log("jsonPath:", jsonPath);
         fs.readFile(jsonPath, "utf-8", (err, data) => {
             if(err)
@@ -49,7 +49,7 @@ router.post("/videos", (req: any, res: any) => {
 router.get("/manifest/:id", (req: any, res: any) => {
     try{
         const id = req.params.id;
-        const manifestPath = `/var/html/media/output_${id}.mpd`;
+        const manifestPath = `/var/html/media/v${id}.mpd`;
         console.log("manifest path:", manifestPath);
         console.log("EXISTS?", fs.existsSync(manifestPath));
         if(fs.existsSync(manifestPath)) 
@@ -64,7 +64,7 @@ router.get("/manifest/:id", (req: any, res: any) => {
 router.get("/thumbnail/:id", (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = `/var/html/media/${id}.jpg`;
+        const thumbnailPath = `/var/html/media/v${id}.jpg`;
         console.log("thumbnail path:", thumbnailPath);
         if(fs.existsSync(thumbnailPath))
             return res.sendFile(thumbnailPath);

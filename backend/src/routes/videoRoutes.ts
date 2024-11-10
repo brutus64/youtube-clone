@@ -3,8 +3,12 @@ import { authMiddlware } from "../middleware/auth";
 import { db } from "../drizzle/db";
 import { video, view, vid_like } from "../drizzle/schema";
 import { and, eq, sql } from "drizzle-orm";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+import { exec } from "child_process";
 const router = Router();
-
+const upload = multer({ dest: '/var/html/media'})
 router.use(authMiddlware);
 
 router.post("/like", async (req: any, res: any) => {
@@ -58,13 +62,59 @@ router.post("/like", async (req: any, res: any) => {
     }
 });
 
-// router.post("/videos", (req, res) => {
+//multer handling mp4File will go into req.file
+router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
+    try{
+        const { author, title } = req.body;
+        const file = req.file;
+        const user_id = req.user_id;
+        if (!file) 
+            return res.status(200).json({ status: "ERROR", error: true, message: "No file uploaded at /api/upload" });
 
-// });
-//IT IS IN FILEROUTES.ts ALREADY
+        //inserts into db basic stuff and gets id of video
+        const [video_id] = await db.insert(video).values({
+            title: title, 
+            status: 'processing',
+            uploaded_by: req.user_id,
+            manifest_path: '',
+            thumbnail_path: '',
+        }).returning( { id: video.id });
+        const videoId = video_id.id;
 
-router.post("/upload", (req, res) => {
-    const { author, title, mp4File } = req.body;
+
+        const fileName = file.filename;
+        const outputDir = path.join('/var/html/media');
+        // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
+
+        // create output directory if it doesn't exist
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        // run the bash script to process the video
+        const scriptPath = path.join('/root/youtube-clone/dash-script/milestone2','dashscript.sh');
+        const command = `bash ${scriptPath} ${fileName} ${videoId}`;
+
+        //exec will have a mutex lock to finish command run first then it will run the callback to update video
+        exec(command, async (error, stdout, stderr) => {
+            if (error) {
+                console.log(`Error processing video in /api/upload: ${error.message}`);
+                await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+                return res.status(200).json({ status: "ERROR", error: true, message: "Error processing video in /api/upload" });
+            }
+
+            // Update video metadata with status 'complete'
+            await db.update(video).set({
+                status: 'complete',
+                manifest_path: path.join('/var/html/media', `v${videoId}.mpd`),
+                thumbnail_path: path.join('/var/html/media', `v${videoId}.jpg`)
+            }).where(eq(video.id, videoId));
+
+            res.status(200).json({ status:"OK", id: videoId });
+        });
+    } catch(err) {
+        return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
+    }
 });
 
 router.post("/view", async (req: any, res: any) => {
@@ -96,8 +146,26 @@ router.post("/view", async (req: any, res: any) => {
     }
 });
 
-router.post("/processing-status", (req, res) => {
-
+interface VideoStatus {
+    id: number;
+    title: string | null;
+    status: string | null;
+}
+router.post("/processing-status", async (req: any, res: any) => {
+    try{
+        const video_query = await db.select().from(video).where(eq(req.user_id,video.id));
+        const videos: VideoStatus[] = [];
+        if(video_query.length > 0){
+            video_query.forEach(vid => {
+                videos.push({id: vid.id, title: vid.title, status: vid.status});
+            })
+        }
+        //im assuming it is okay to return empty array if there's nothing uploaded
+        return res.status(200).json({status: "OK", videos: videos});
+    }catch(err){
+        console.log("internal server error at /api/processing-status:", err);
+        return res.status(200).json({status:"ERROR", error:true, message: "internal server error at /api/processing-status"});
+    }
 });
 
 export default router;

@@ -20,9 +20,9 @@ export const session = pgTable("session", {
 });
 
 export const video = pgTable("video", {
-    id: text("id").primaryKey(),
+    id: serial("id").primaryKey(),
     title: text("title"),
-    description: text("description"),
+    description: text("description").default(""),
     like: integer("like").default(0),
     dislike: integer("dislike").default(0),
     status: text("status"),//for processing status
@@ -36,7 +36,7 @@ export const video = pgTable("video", {
 //a video can be liked by mulltiple users
 export const vid_like = pgTable("vid_like", {
     user_id: integer("user_id").references(() => user.id),
-    video_id: text("video_id").references(() => video.id),
+    video_id: integer("video_id").references(() => video.id),
     liked: boolean("liked"),
 }, (table) => {
     return {
@@ -46,7 +46,7 @@ export const vid_like = pgTable("vid_like", {
 
 export const view = pgTable("view", {
     user_id: integer("user_id").references(() => user.id),
-    video_id: text("video_id").references(() => video.id),
+    video_id: integer("video_id").references(() => video.id),
     viewed: boolean("viewed"),
 }, (table) => {
     return {
