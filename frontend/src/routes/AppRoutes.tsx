@@ -3,6 +3,7 @@ import UserHome from "../components/UserHome";
 import Login from "../components/Login";
 import Signup from "../components/Signup";
 import PlayerList from "../components/PlayerList"
+import Upload from "../components/Upload";
 import { useAuth } from "../contexts/useAuth";
 import { useEffect } from "react";
 // import ProtectedRoutes from "./ProtectedRoutes";
@@ -21,6 +22,7 @@ const AppRoutes = () => {
             {/* <Route path="/login" element={<Login />} /> */}
             {/* <Route element={<ProtectedRoutes />}> */}
             <Route path="/play/:id" element={<PlayerList />} />
+            <Route path="/upload" element={<Upload />} />
             {/* <Route path="/" element={<UserHome />} /> */}
             {/* </Route> */}
             {/* <Route path="/" element={<Login />} /> */}
