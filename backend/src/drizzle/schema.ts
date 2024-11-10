@@ -47,7 +47,7 @@ export const vid_like = pgTable("vid_like", {
 export const view = pgTable("view", {
     user_id: integer("user_id").references(() => user.id),
     video_id: text("video_id").references(() => video.id),
-    viewed_at: timestamp("viewed_at").defaultNow()
+    viewed: boolean("viewed"),
 }, (table) => {
     return {
         pk: primaryKey({ columns: [table.user_id, table.video_id]})
