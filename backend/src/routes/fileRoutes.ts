@@ -64,7 +64,7 @@ router.get("/manifest/:id", (req: any, res: any) => {
 router.get("/thumbnail/:id", (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = `/var/html/media/v${id}.jpg`;
+        const thumbnailPath = `/var/html/media/${id}.jpg`;
         console.log("thumbnail path:", thumbnailPath);
         if(fs.existsSync(thumbnailPath))
             return res.sendFile(thumbnailPath);

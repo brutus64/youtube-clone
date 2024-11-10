@@ -27,7 +27,7 @@ const VideoPlayer = ({ manifest }) => {
         <h1>{manifest}</h1>
         <ReactPlayer 
           playing={isPlaying}
-          url={"/media/output_"+manifest+".mpd"}
+          url={"/media/"+manifest+".mpd"}
           controls={true}
         />
         <div>

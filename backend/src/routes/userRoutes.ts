@@ -96,9 +96,11 @@ router.post("/login", async (req: any, res: any) => {
 
 router.post("/check-auth", (req:any, res:any) => {
     try{
-        console.log("req from /api/check-auth:", req.session);
-        if(req.session && req.session.user) 
-            return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user});
+        console.log("req from /api/check-auth:", req.session.user);
+        if(req.session && req.session.user) {
+          console.log("userId returned:", req.session.user.id);
+          return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user.id});
+        }
         return res.status(200).json({status:"OK", isLoggedIn:false , userId: null});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"check-auth internal server error"})
