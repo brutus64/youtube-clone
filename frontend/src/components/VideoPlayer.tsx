@@ -31,8 +31,8 @@ const VideoPlayer = ({ manifest }) => {
           controls={true}
         />
         <div>
-          <button id="like" onClick={()=>handleLike(false)}>Like</button>
-          <button id="dislike" onClick={()=>handleLike(false)}>Dislike</button>
+          <button name="like" id="like" onClick={()=>handleLike(false)}>Like</button>
+          <button name="dislike" id="dislike" onClick={()=>handleLike(false)}>Dislike</button>
         </div>
         <div id="playPauseBtn">
           <button onClick={handlePlayPause}>{isPlaying ? "Pause" : "Play"}</button>
