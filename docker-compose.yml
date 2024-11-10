@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /root/youtube-clone/media:/var/html/media
+      - /root/youtube-clone/dash-script:/root/youtube-media/dash-script
     # volumes:
     #   - ./backend:/app #bind mounting
     # ports:
@@ -53,6 +54,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - /root/youtube-clone/media:/var/html/media
+      - /root/youtube-clone/dash-script:/root/youtube-media/dash-script
     network_mode: host
     depends_on:
       - frontend
