@@ -5,6 +5,7 @@ import cors from 'cors';
 import PgSession from 'connect-pg-simple';
 import userRoutes from './routes/userRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
+import videoRoutes from './routes/videoRoutes.js';
 import session from 'express-session';
 import pkg from 'pg';
 const {Pool} = pkg;
@@ -43,7 +44,7 @@ app.use(session({
 //ACTUAL ROUTES
 app.use('/api', userRoutes);
 app.use('/api', fileRoutes);
-
+app.use('/api', videoRoutes);
 
 app.get("/media/:mpeg", authMiddlware, (req: any, res: any) => {
     console.log("MEDIA");

@@ -87,7 +87,7 @@ router.post("/login", async (req: any, res: any) => {
         if(user_query.length == 0)
             return res.status(200).json({status:"ERROR",error:true,message:"log in request failed, either wrong info or disabled account or non-existent"})
         console.log(user_query[0]);
-        req.session.user = user_query[0].username;
+        req.session.user = { id: user_query[0].id, username: user_query[0].username };
         return res.status(200).json({status:"OK"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal error to /login"});
