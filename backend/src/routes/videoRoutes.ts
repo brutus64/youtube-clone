@@ -12,7 +12,7 @@ import { Worker } from "bullmq";
 import { redisConfig } from "../configs/redisConfig";
 
 const router = Router();
-const upload = multer({ dest: '/var/html/media', limits: { fileSize: 100 * 1024 * 1024}})
+const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
 router.use(authMiddlware);
 
 

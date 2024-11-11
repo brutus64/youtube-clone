@@ -15,8 +15,8 @@ import { authMiddlware } from './middleware/auth.js';
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(bodyParser.json( {limit: '100mb' }))
-app.use(bodyParser.urlencoded({ limit: '100mb', extended: true}))
+app.use(bodyParser.json( {limit: '900mb' }))
+app.use(bodyParser.urlencoded({ limit: '900mb', extended: true}))
 app.use(express.json()); //parses 
 // app.use(urlencoded({ extended: false }));
 app.use(cors( {
