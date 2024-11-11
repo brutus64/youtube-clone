@@ -34,7 +34,7 @@ const Upload = () => {
     }
     return(
         <>
-            <form>
+            <form onSubmit={handleUpload}>
                 <div>
                     <label htmlFor="title">Title</label>
                     <input 
@@ -62,7 +62,7 @@ const Upload = () => {
                         onChange={handleFileChange}
                     />
                 </div>
-                <button onClick={handleUpload}>Upload</button>
+                <button type="submit">Upload</button>
             </form>
             {errMsg && <div>{errMsg}</div>}
             {resMsg && <div>{resMsg}</div>}

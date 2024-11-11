@@ -42,7 +42,7 @@ const Login = () => {
     }
     return (
         <div id="login-form">
-            <form>
+            <form onSubmit={submitLogin}>
                 <div>
                     <label htmlFor="username"><h1>Username</h1></label>
                     <input 
@@ -65,7 +65,7 @@ const Login = () => {
                     />
                 </div>
                 <div>
-                    <button className="submit-button" onClick={submitLogin}>Login</button>
+                    <button className="submit-button" type='submit'>Login</button>
                 </div>
                 <div>
                     <Link to="/signup">I don't have an account</Link>
