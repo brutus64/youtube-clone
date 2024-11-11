@@ -20,12 +20,6 @@ services:
   redis:
     image: redis:latest
     network_mode: host
-
-  redis:
-    image: redis
-    restart: unless-stopped
-    ports:
-      - 6379:6379
   
   gorse:
     image: zhenghaoz/gorse-in-one
