@@ -93,6 +93,7 @@ console.log("db_like_status: "+db_like_status);
 //multer handling mp4File will go into req.file
 router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
     try{
+        console.log("ACCEPTING REQUEST TO /api/upload");
         const { author, title } = req.body;
         const file = req.file;
         const user_id = req.user_id;
@@ -121,7 +122,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             userId: user_id,
             title
         });
-console.log("VIDEOID upload:",videoId);
+        console.log("VIDEOID upload:",videoId);
         return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
