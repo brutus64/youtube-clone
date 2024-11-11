@@ -74,7 +74,9 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         const user_id = req.user_id;
         if (!file) 
             return res.status(200).json({ status: "ERROR", error: true, message: "No file uploaded at /api/upload" });
-
+        const originalPath = file.path;
+        const newPath = originalPath + '.mp4';
+        fs.renameSync(originalPath, newPath);
         const fileName = file.filename;
         //inserts into db basic stuff and gets id of video
         const [video_id] = await db.insert(video).values({
@@ -86,11 +88,11 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             thumbnail_path: '',
         }).returning( { id: video.id });
         const videoId = video_id.id;
+        const filename_path = file.filename + '.mp4';
 
-
-
+        console.log("filename_path in /api/upload:", filename_path);
         await uploadQueue.add('process-upload', {
-            fileName,
+            filename_path,
             videoId,
             userId: user_id,
             title

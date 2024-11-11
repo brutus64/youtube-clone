@@ -8,18 +8,20 @@ import path from "path";
 import fs from "fs";
 
 const worker = new Worker('uploadQueue', async job => {
-    const { fileName, videoId, userId, title } = job.data
-    const outputDir = path.join('/var/html/media');
+    console.log(`PROCESSING JOB ${job.id} IN WORKER`);
+    const { filename_path, videoId, userId, title } = job.data
+    const outputDir = '/var/html/media';
+    const inFile = path.join(outputDir, filename_path);
     // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
 
     // create output directory if it doesn't exist
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+    if (!fs.existsSync(inFile)) {
+        console.log("INPUT FILE DOES NOT EXIST IN WORKER");
     }
 
     // run the bash script to process the video
     const scriptPath = path.join('/root/youtube-clone/dash-script/milestone2','dashscript.sh');
-    const command = `bash ${scriptPath} ${fileName} ${videoId}`;
+    const command = `bash ${scriptPath} ${filename_path} ${videoId}`;
 
     //exec will have a mutex lock to finish command run first then it will run the callback to update video
     exec(command, async (error, stdout, stderr) => {
@@ -51,4 +53,5 @@ worker.on('failed', (job : any,err) => {
     console.log(`job failed to upload ${job.id} with err: ${err.message}`)
 });
 
+console.log("Worker started?");
 export default worker;
