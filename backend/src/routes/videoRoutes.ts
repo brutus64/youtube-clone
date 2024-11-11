@@ -9,9 +9,11 @@ import multer from "multer";
 import { exec } from "child_process";
 import { uploadQueue } from "../redis/uploadQueue";
 import { insertRating } from "../rec";
+import { Worker } from "bullmq";
+import { redisConfig } from "../configs/redisConfig";
 
 const router = Router();
-const upload = multer({ dest: '/var/html/media', limits: { fileSize: 100 * 1024 * 1024}})
+const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
 router.use(authMiddlware);
 
 
@@ -119,11 +121,8 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             userId: user_id,
             title
         });
-const counts = await uploadQueue.getJobCounts('wait', 'completed', 'failed');
-console.log("UPQUEUE: "+counts.wait);
-console.log("UPQUEUE: "+counts.completed);
-console.log("UPQUEUE: "+counts.failed);
-        return res.status(200).json({status: "OK", videoId: videoId});
+console.log("VIDEOID upload:",videoId);
+        return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
     }
@@ -165,12 +164,14 @@ interface VideoStatus {
     title: string | null;
     status: string | null;
 }
-router.post("/processing-status", async (req: any, res: any) => {
+router.get("/processing-status", async (req: any, res: any) => {
     try{
-        const video_query = await db.select().from(video).where(eq(req.username,video.uploaded_by));
+// console.log("user ids: "+req.user_id,video.uploaded_by);
+        const video_query = await db.select().from(video).where(eq(req.user_id,video.uploaded_by));
         const videos: VideoStatus[] = [];
         if(video_query.length > 0){
             video_query.forEach(vid => {
+                console.log("ID: ", vid.id, '\nTITLE: ', vid.title, '\nSTATUS:', vid.status);
                 videos.push({id: vid.id, title: vid.title, status: vid.status});
             })
         }
@@ -180,6 +181,55 @@ router.post("/processing-status", async (req: any, res: any) => {
         console.log("internal server error at /api/processing-status:", err);
         return res.status(200).json({status:"ERROR", error:true, message: "internal server error at /api/processing-status"});
     }
+});
+
+const worker = new Worker('uploadQueue', async job => {
+    console.log(`PROCESSING JOB ${job.id} IN WORKER`);
+    const { filename_path, videoId, userId, title } = job.data
+    const outputDir = '/var/html/media';
+    const inFile = path.join(outputDir, filename_path);
+    // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
+
+    // create output directory if it doesn't exist
+    if (!fs.existsSync(inFile)) {
+        console.log("INPUT FILE DOES NOT EXIST IN WORKER");
+    }
+
+    // run the bash script to process the video
+    const scriptPath = path.join('/var/html/milestone2','dashscript.sh');
+    const command = `bash ${scriptPath} ${filename_path} ${videoId}`;
+
+    //exec will have a mutex lock to finish command run first then it will run the callback to update video
+    exec(command, async (error, stdout, stderr) => {
+        if (error) {
+            console.log(`Error processing video in /api/upload: ${error.message}`);
+            await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+            return;
+        }
+
+        // Update video metadata with status 'complete'
+        await db.update(video).set({
+            status: 'complete',
+            manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
+            thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
+        }).where(eq(video.id, videoId));
+
+    })
+}, {connection: redisConfig})
+
+worker.on('active', job => {
+    console.log(`process-upload job ${job.id} is now active. working on it!`);
+});
+
+worker.on('completed', job => {
+    console.log(`process-upload job ${job.id} has completed!`);
+});
+
+worker.on('failed', (job : any,err) => {
+    console.log(`job failed to upload ${job.id} with err: ${err.message}`)
+});
+worker.on('ready', () => {
+    console.log('Worker successfully connected to Redis');
 });
 
 export default router;
