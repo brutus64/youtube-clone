@@ -1,0 +1,54 @@
+import { Worker } from "bullmq";
+import { redisConfig } from "../configs/redisConfig";
+import { db } from "../drizzle/db";
+import { video } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { exec } from "child_process";
+import path from "path";
+import fs from "fs";
+
+const worker = new Worker('uploadQueue', async job => {
+    const { fileName, videoId, userId, title } = job.data
+    const outputDir = path.join('/var/html/media');
+    // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
+
+    // create output directory if it doesn't exist
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // run the bash script to process the video
+    const scriptPath = path.join('/root/youtube-clone/dash-script/milestone2','dashscript.sh');
+    const command = `bash ${scriptPath} ${fileName} ${videoId}`;
+
+    //exec will have a mutex lock to finish command run first then it will run the callback to update video
+    exec(command, async (error, stdout, stderr) => {
+        if (error) {
+            console.log(`Error processing video in /api/upload: ${error.message}`);
+            await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+            return;
+        }
+
+        // Update video metadata with status 'complete'
+        await db.update(video).set({
+            status: 'complete',
+            manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
+            thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
+        }).where(eq(video.id, videoId));
+
+    })
+}, {connection: redisConfig})
+
+worker.on('active', job => {
+    console.log(`process-upload job ${job.id} is now active. working on it!`);
+});
+
+worker.on('completed', job => {
+    console.log(`process-upload job ${job.id} has completed!`);
+});
+
+worker.on('failed', (job : any,err) => {
+    console.log(`job failed to upload ${job.id} with err: ${err.message}`)
+});
+
+export default worker;

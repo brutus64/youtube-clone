@@ -49,7 +49,7 @@ router.post("/videos", (req: any, res: any) => {
 router.get("/manifest/:id", (req: any, res: any) => {
     try{
         const id = req.params.id;
-        const manifestPath = `/var/html/media/v${id}.mpd`;
+        const manifestPath = `/var/html/media/${id}.mpd`;
         console.log("manifest path:", manifestPath);
         console.log("EXISTS?", fs.existsSync(manifestPath));
         if(fs.existsSync(manifestPath)) 
@@ -64,7 +64,7 @@ router.get("/manifest/:id", (req: any, res: any) => {
 router.get("/thumbnail/:id", (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = `/var/html/media/v${id}.jpg`;
+        const thumbnailPath = `/var/html/media/${id}.jpg`;
         console.log("thumbnail path:", thumbnailPath);
         if(fs.existsSync(thumbnailPath))
             return res.sendFile(thumbnailPath);

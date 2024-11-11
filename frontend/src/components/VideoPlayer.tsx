@@ -27,11 +27,11 @@ const VideoPlayer = ({ manifest }) => {
         <h1>{manifest}</h1>
         <ReactPlayer 
           playing={isPlaying}
-          url={"/media/output_"+manifest+".mpd"}
+          url={"/media/"+manifest+".mpd"}
           controls={true}
         />
         <div>
-          <button name="like" id="like" onClick={()=>handleLike(false)}>Like</button>
+          <button name="like" id="like" onClick={()=>handleLike(true)}>Like</button>
           <button name="dislike" id="dislike" onClick={()=>handleLike(false)}>Dislike</button>
         </div>
         <div id="playPauseBtn">

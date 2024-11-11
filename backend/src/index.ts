@@ -8,13 +8,18 @@ import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import session from 'express-session';
 import pkg from 'pg';
+import bodyParser from 'body-parser';
 const {Pool} = pkg;
 import { authMiddlware } from './middleware/auth.js';
+import worker from './redis/uploadWorker.js';
 //MIDDLEWARE
 const app = express();
 const port = process.env.PORT || 5000;
+
+app.use(bodyParser.json( {limit: '100mb' }))
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true}))
 app.use(express.json()); //parses 
-app.use(urlencoded({ extended: false }));
+// app.use(urlencoded({ extended: false }));
 app.use(cors( {
     origin: '*',
     credentials: true

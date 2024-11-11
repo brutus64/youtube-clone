@@ -16,6 +16,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     network_mode: host
+  
+  redis:
+    image: redis:latest
+    network_mode: host
 
   redis:
     image: redis
@@ -76,7 +80,7 @@ services:
     # ports:
     #   - "5173:5173"
     network_mode: host
-    
+
   nginx:
     image: nginx:latest
     volumes:

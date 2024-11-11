@@ -7,9 +7,13 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { exec } from "child_process";
+import { uploadQueue } from "../redis/uploadQueue";
+
 const router = Router();
-const upload = multer({ dest: '/var/html/media'})
+const upload = multer({ dest: '/var/html/media', limits: { fileSize: 100 * 1024 * 1024}})
 router.use(authMiddlware);
+
+
 
 router.post("/like", async (req: any, res: any) => {
     try {
@@ -38,7 +42,7 @@ router.post("/like", async (req: any, res: any) => {
             await db.update(video).set({
                 like: sql`${video.like} + 1`,
             }).where(eq(video.id,id));
-            if(like_query[0].liked === false) //if it was originally disliked
+            if(like_query[0] !== undefined && like_query[0].liked === false) //if it was originally disliked
                 await db.update(video).set({
                     dislike: sql`${video.dislike} - 1`
                 }).where(eq(video.id,id));
@@ -48,7 +52,7 @@ router.post("/like", async (req: any, res: any) => {
             await db.update(video).set({
                 dislike: sql`${video.dislike} + 1`,
             }).where(eq(video.id,id));
-            if(like_query[0].liked === true)
+            if(like_query[0] !== undefined && like_query[0].liked === true)
                 await db.update(video).set({
                     like: sql`${video.like} - 1`
                 }).where(eq(video.id,id));
@@ -58,7 +62,7 @@ router.post("/like", async (req: any, res: any) => {
         // Allow a logged in user to “like” a post specified by id. value = true  if thumbs up, value = false if thumbs down and null if the user did not “like” or “dislike” the video.
         // Response format: {likes: number} which is the number of likes on the post. This api should return an error if the new “value” is the same as was already previously set.
     } catch(err) {
-        return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like"});
+        return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
     }
 });
 
@@ -71,8 +75,10 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         if (!file) 
             return res.status(200).json({ status: "ERROR", error: true, message: "No file uploaded at /api/upload" });
 
+        const fileName = file.filename;
         //inserts into db basic stuff and gets id of video
         const [video_id] = await db.insert(video).values({
+            id: `v${fileName}`,
             title: title, 
             status: 'processing',
             uploaded_by: req.user_id,
@@ -82,36 +88,14 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         const videoId = video_id.id;
 
 
-        const fileName = file.filename;
-        const outputDir = path.join('/var/html/media');
-        // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
 
-        // create output directory if it doesn't exist
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
-        // run the bash script to process the video
-        const scriptPath = path.join('/root/youtube-clone/dash-script/milestone2','dashscript.sh');
-        const command = `bash ${scriptPath} ${fileName} ${videoId}`;
-
-        //exec will have a mutex lock to finish command run first then it will run the callback to update video
-        exec(command, async (error, stdout, stderr) => {
-            if (error) {
-                console.log(`Error processing video in /api/upload: ${error.message}`);
-                await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
-                return res.status(200).json({ status: "ERROR", error: true, message: "Error processing video in /api/upload" });
-            }
-
-            // Update video metadata with status 'complete'
-            await db.update(video).set({
-                status: 'complete',
-                manifest_path: path.join('/var/html/media', `v${videoId}.mpd`),
-                thumbnail_path: path.join('/var/html/media', `v${videoId}.jpg`)
-            }).where(eq(video.id, videoId));
-
-            res.status(200).json({ status:"OK", id: videoId });
+        await uploadQueue.add('process-upload', {
+            fileName,
+            videoId,
+            userId: user_id,
+            title
         });
+        return res.status(200).json({status: "OK", videoId: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
     }
@@ -147,13 +131,13 @@ router.post("/view", async (req: any, res: any) => {
 });
 
 interface VideoStatus {
-    id: number;
+    id: string | null;
     title: string | null;
     status: string | null;
 }
 router.post("/processing-status", async (req: any, res: any) => {
     try{
-        const video_query = await db.select().from(video).where(eq(req.user_id,video.id));
+        const video_query = await db.select().from(video).where(eq(req.username,video.uploaded_by));
         const videos: VideoStatus[] = [];
         if(video_query.length > 0){
             video_query.forEach(vid => {
