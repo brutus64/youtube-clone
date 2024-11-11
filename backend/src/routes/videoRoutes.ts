@@ -19,10 +19,17 @@ router.use(authMiddlware);
 router.post("/like", async (req: any, res: any) => {
     try {
         const { id, value } = req.body;
+        //check if video_likes already exist 
         const video_query = await db.select().from(video).where(eq(video.id, id));
         if (video_query.length === 0)
             return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
-        const like_query = await db.select().from(vid_like).where(eq(vid_like.video_id,id));
+console.log("VALUE: "+value);
+
+        //check if vid_like exists already
+        const like_query = await db.select().from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
+
+        const db_like_status = like_query[0]?.liked;
+console.log("db_like_status: "+db_like_status);
         //video never seen or liked before
         if(like_query.length === 0){
             const like_record = {
@@ -31,38 +38,51 @@ router.post("/like", async (req: any, res: any) => {
                 liked: value, //can be null
             };
             await db.insert(vid_like).values(like_record);
+            if (value === true) {
+                await db.update(video).set({
+                    like: sql`${video.like} + 1`
+                }).where(eq(video.id, id));
+            } else if (value === false) {
+                await db.update(video).set({
+                    dislike: sql`${video.dislike} + 1`
+                }).where(eq(video.id, id));
+            }
         } 
         else { //like_query already exists
-            if(like_query[0].liked === value && (value === true || value === false))
+            //
+            if(db_like_status === value)
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
-            await db.update(vid_like).set({ liked: value }).where(and(eq(vid_like.user_id,req.user_id),(vid_like.video_id,id)));
         }
+        await db.update(vid_like).set({ liked: value }).where(and(eq(vid_like.user_id,req.user_id),eq(vid_like.video_id,id)));
         //START UPDATING VIDEO DATA DEPENDING ON LIKE VALUE
         //already confirmed to be different values
-        if(value) { //liked the video (originally could be null need to separate cases)
+        if (db_like_status === true && value === false) {
+            await db.update(video).set({
+                like: sql`${video.like} - 1`,
+                dislike: sql`${video.dislike} + 1`
+            }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"dislike");
+        } else if (db_like_status === true && value === null){
+            await db.update(video).set({
+                like: sql`${video.like} - 1`
+            }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"view");
+        } else if (db_like_status === false && value === true) {
             await db.update(video).set({
                 like: sql`${video.like} + 1`,
+                dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
-            if(like_query[0] !== undefined && like_query[0].liked === false) //if it was originally disliked
-                await db.update(video).set({
-                    dislike: sql`${video.dislike} - 1`
-                }).where(eq(video.id,id));
             insertRating(req.user_id,id,"like");
-        }
-        else {
+        } else if (db_like_status === false && value === null) {
             await db.update(video).set({
-                dislike: sql`${video.dislike} + 1`,
+                dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
-            if(like_query[0] !== undefined && like_query[0].liked === true)
-                await db.update(video).set({
-                    like: sql`${video.like} - 1`
-                }).where(eq(video.id,id));
-            insertRating(req.user_id,id,"dislike")
+            insertRating(req.user_id,id,"dislike");
         }
+        
         const new_record = await db.select({like: video.like}).from(video).where(eq(video.id,id));
         return res.status(200).json({ status:"OK", likes: new_record[0].like });
-        // Allow a logged in user to “like” a post specified by id. value = true  if thumbs up, value = false if thumbs down and null if the user did not “like” or “dislike” the video.
-        // Response format: {likes: number} which is the number of likes on the post. This api should return an error if the new “value” is the same as was already previously set.
+        
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
     }
@@ -99,6 +119,10 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             userId: user_id,
             title
         });
+const counts = await uploadQueue.getJobCounts('wait', 'completed', 'failed');
+console.log("UPQUEUE: "+counts.wait);
+console.log("UPQUEUE: "+counts.completed);
+console.log("UPQUEUE: "+counts.failed);
         return res.status(200).json({status: "OK", videoId: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});

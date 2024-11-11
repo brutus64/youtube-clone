@@ -49,7 +49,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /root/youtube-clone/media:/var/html/media
-      - /root/youtube-clone/dash-script:/root/youtube-media/dash-script
+      - /root/youtube-clone/dash-script:/var/html
     # volumes:
     #   - ./backend:/app #bind mounting
     # ports:
