@@ -17,6 +17,34 @@ services:
       - postgres_data:/var/lib/postgresql/data
     network_mode: host
 
+  redis:
+    image: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+  
+  gorse:
+    image: zhenghaoz/gorse-in-one
+    restart: unless-stopped
+    ports:
+      - 8086:8086   # gRPC port
+      - 8088:8088   # HTTP port
+    environment:
+      # Use Redis as cache storage backend.
+      GORSE_CACHE_STORE: redis://localhost:6379
+      # Use PostgresSQL as data storage backend.
+      GORSE_DATA_STORE: ${GORSE_POSTGRES_STORE}
+    command: >
+      -c /etc/gorse/config.toml 
+      --log-path /var/log/gorse/master.log 
+      --cache-path /var/lib/gorse/master_cache.data
+    volumes:
+      # Mount the configuration file.
+      - ./config.toml:/etc/gorse/config.toml
+    depends_on:
+      - redis
+      - db
+
   backend:
     build:
       context: ./backend
