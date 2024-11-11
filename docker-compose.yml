@@ -16,6 +16,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     network_mode: host
+  
+  redis:
+    image: redis:latest
+    network_mode: host
 
   backend:
     build:
@@ -36,8 +40,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis: #don't know if this will work
-        condition: service_healthy
 
   frontend:
     build:
@@ -50,11 +52,6 @@ services:
     # ports:
     #   - "5173:5173"
     network_mode: host
-  
-  redis:
-    image: redis:latest
-    network_mode: host
-  
 
   nginx:
     image: nginx:latest

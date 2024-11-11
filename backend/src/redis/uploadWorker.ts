@@ -36,8 +36,8 @@ const worker = new Worker('uploadQueue', async job => {
             thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
         }).where(eq(video.id, videoId));
 
-    });
-})
+    })
+}, {connection: redisConfig})
 
 worker.on('active', job => {
     console.log(`process-upload job ${job.id} is now active. working on it!`);
