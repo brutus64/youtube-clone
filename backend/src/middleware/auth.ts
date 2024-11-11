@@ -3,8 +3,10 @@ export const authMiddlware = (req: any, res: any, next: any) => {
         // console.log("req from authMiddleware:", req);
         try{
             const user_id = req.session.user.id; //does this even work?
-            console.log("--------------------middleware---------------\n","user id:", user_id);
+            const username = req.session.user.username
+            console.log("--------------------middleware---------------\n","user id:", user_id, " username: ", username);
             req.user_id = user_id;
+            req.username = username;
             return next();
         } catch(err) {
             console.log("could not grab user.id from authMiddleware:", err);
