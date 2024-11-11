@@ -26,8 +26,8 @@ const Upload = () => {
             },
         };
         const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/upload",formData,config);
-        if(res.data && res.data.videoId){
-            setResMsg(`File uploaded, video id: ${res.data.videoId}`);
+        if(res.data && res.data.id){
+            setResMsg(`File uploaded, video id: ${res.data.id}`);
             return;
         }
         setResMsg(`Upload failed.`);

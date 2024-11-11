@@ -30,9 +30,9 @@ const Thumbnail = ({vid}) => {
 //                 console.log(`Error fetching video thumbnail ${vid}: ${err}`);
 //             });
             
-//         }
-//         fetchThumbnail();
-//     },[vid]);
+    //     }
+    //     fetchThumbnail();
+    // },[vid]);
 
     return (
         <div className="thumbnail-box" onClick={()=>navigate(`/play/${vid}`)}>
