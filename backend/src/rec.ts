@@ -1,8 +1,7 @@
 import { Gorse } from "gorsejs";
 import { db } from "./drizzle/db";
-import { vid_like, video,view } from "./drizzle/schema";
-import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
-import { title } from "process";
+import { vid_like,video,view } from "./drizzle/schema";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 const client = new Gorse({
     endpoint: "http://127.0.0.1:8088",
@@ -10,13 +9,14 @@ const client = new Gorse({
 })
 
 export function insertRating(uid: string, vid: string, type: string) {
-    client.insertFeedbacks([{
+    client.upsertFeedbacks([{
         FeedbackType: type,
         UserId: uid,
         ItemId: vid,
         Timestamp: new Date()
-    }]);
+    }]); //upsert overwrites past feedback (desired)
 }
+
 
 export function deleteRating(uid: string, vid: string, type: string) {
     client.deleteFeedback({
@@ -28,6 +28,7 @@ export function deleteRating(uid: string, vid: string, type: string) {
 
 // return list of <num> video ids
 export async function recommend(uid: number, num: number) {
+    console.log("Getting recommendations...")
     const recommendation_ids = await client.getRecommend({
         userId: uid.toString(),
         cursorOptions: {n: num},
@@ -53,6 +54,7 @@ export async function recommend(uid: number, num: number) {
     //not enough recommendations: insert random unwatched videos
     //does gorse already use as much videos as it can recommend (even bad recommendations)?
     if (recommendations.length < num) { 
+        console.log("Not enough recommendations! Getting all unwatched videos...")
         const uidViews:any = (await db.select({vid:view.video_id}).from(view).where(eq(view.user_id,uid))).map(v => v.vid);
         const unwatched = await db.select({
             id:video.id,
@@ -73,6 +75,7 @@ export async function recommend(uid: number, num: number) {
 
         //no more unwatched videos: insert watched videos
         if (recommendations.length < num) {
+            console.log("No more unwatched videos! Getting the rest of the database...")
             const watched = await db.select({
                 id:video.id,
                 description:video.description,

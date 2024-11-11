@@ -8,6 +8,7 @@ import fs from "fs";
 import multer from "multer";
 import { exec } from "child_process";
 import { uploadQueue } from "../redis/uploadQueue";
+import { insertRating } from "../rec";
 
 const router = Router();
 const upload = multer({ dest: '/var/html/media', limits: { fileSize: 100 * 1024 * 1024}})
@@ -46,7 +47,7 @@ router.post("/like", async (req: any, res: any) => {
                 await db.update(video).set({
                     dislike: sql`${video.dislike} - 1`
                 }).where(eq(video.id,id));
-            
+            insertRating(req.user_id,id,"like");
         }
         else {
             await db.update(video).set({
@@ -56,6 +57,7 @@ router.post("/like", async (req: any, res: any) => {
                 await db.update(video).set({
                     like: sql`${video.like} - 1`
                 }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"dislike")
         }
         const new_record = await db.select({like: video.like}).from(video).where(eq(video.id,id));
         return res.status(200).json({ status:"OK", likes: new_record[0].like });
@@ -123,6 +125,8 @@ router.post("/view", async (req: any, res: any) => {
         }
         else
             viewed_before = true;
+
+        insertRating(req.user_id,id,"view");
         // POST /api/view { id }
         // Mark video “id” as viewed by the logged in user.  This API call should be made by the UI on videos that were not previously watched whenever that video is first “played” for the user. 
         // Response format: {viewed: Boolean}, viewed = true if user has viewed this post before and false otherwise
