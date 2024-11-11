@@ -11,7 +11,6 @@ import pkg from 'pg';
 import bodyParser from 'body-parser';
 const {Pool} = pkg;
 import { authMiddlware } from './middleware/auth.js';
-import worker from './redis/uploadWorker.js';
 //MIDDLEWARE
 const app = express();
 const port = process.env.PORT || 5000;
