@@ -3,8 +3,8 @@ import ReactPlayer from 'react-player'
 import axios from 'axios';
 
 //BONUS: Displaying the like and dislikes prior and post clicking
-const VideoPlayer = ({ manifest }) => {
-    const [isPlaying, setIsPlaying] = useState(false); //autoplay
+const VideoPlayer = ({ vidData,visible }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
 
     const handlePlayPause = () => {
         setIsPlaying((prev) => !prev);
@@ -14,7 +14,7 @@ const VideoPlayer = ({ manifest }) => {
       try {
         //I believe the manifest here is actually the id
         //Reasoning: AppRoutes.tsx
-        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/like", {id: manifest,value: value});
+        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/like", {id: vidData.id,value: value});
         if(res.data)
           console.log("res.data should be number of likes now: ", res.data);
       } catch(err) {
@@ -23,20 +23,28 @@ const VideoPlayer = ({ manifest }) => {
     }
 
     return (
-    <div className="video-box">
-        <h1>{manifest}</h1>
+    <div className="video-box" style={{display: (visible ? "flex" : "none") }}>
+        <h1>{vidData.title}</h1>
         <ReactPlayer 
           playing={isPlaying}
-          url={"/media/"+manifest+".mpd"}
+          url={"/media/"+vidData.id+".mpd"}
           controls={true}
         />
-        <div>
-          <button name="like" id="like" onClick={()=>handleLike(true)}>Like</button>
-          <button name="dislike" id="dislike" onClick={()=>handleLike(false)}>Dislike</button>
+        <div className="video-data">
+          <div className="like-dislike-box">
+            <div className="like-box">
+              <button name="like" id="like" onClick={()=>handleLike(true)}></button>
+              {vidData.likevalues}
+            </div>
+            
+            <button name="dislike" id="dislike" onClick={()=>handleLike(false)}></button>
+          </div>
+          <div id="playPauseBtn">
+            <button onClick={handlePlayPause}>{isPlaying ? "Pause" : "Play"}</button>
+          </div>
         </div>
-        <div id="playPauseBtn">
-          <button onClick={handlePlayPause}>{isPlaying ? "Pause" : "Play"}</button>
-        </div>
+        
+        
     </div>
     )
 }

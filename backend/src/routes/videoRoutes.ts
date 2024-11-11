@@ -8,6 +8,7 @@ import fs from "fs";
 import multer from "multer";
 import { exec } from "child_process";
 import { uploadQueue } from "../redis/uploadQueue";
+import { insertRating } from "../rec";
 import { Worker } from "bullmq";
 import { redisConfig } from "../configs/redisConfig";
 
@@ -64,19 +65,23 @@ console.log("db_like_status: "+db_like_status);
                 like: sql`${video.like} - 1`,
                 dislike: sql`${video.dislike} + 1`
             }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"dislike");
         } else if (db_like_status === true && value === null){
             await db.update(video).set({
                 like: sql`${video.like} - 1`
             }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"view");
         } else if (db_like_status === false && value === true) {
             await db.update(video).set({
                 like: sql`${video.like} + 1`,
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"like");
         } else if (db_like_status === false && value === null) {
             await db.update(video).set({
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
+            insertRating(req.user_id,id,"dislike");
         }
         
         const new_record = await db.select({like: video.like}).from(video).where(eq(video.id,id));
@@ -147,6 +152,8 @@ router.post("/view", async (req: any, res: any) => {
         }
         else
             viewed_before = true;
+
+        insertRating(req.user_id,id,"view");
         // POST /api/view { id }
         // Mark video “id” as viewed by the logged in user.  This API call should be made by the UI on videos that were not previously watched whenever that video is first “played” for the user. 
         // Response format: {viewed: Boolean}, viewed = true if user has viewed this post before and false otherwise
