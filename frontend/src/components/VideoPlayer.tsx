@@ -4,7 +4,7 @@ import axios from 'axios';
 
 //BONUS: Displaying the like and dislikes prior and post clicking
 const VideoPlayer = ({ manifest }) => {
-    const [isPlaying, setIsPlaying] = useState(true); //autoplay
+    const [isPlaying, setIsPlaying] = useState(false); //autoplay
 
     const handlePlayPause = () => {
         setIsPlaying((prev) => !prev);

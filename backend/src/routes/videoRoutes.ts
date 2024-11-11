@@ -13,6 +13,8 @@ import { redisConfig } from "../configs/redisConfig";
 
 const router = Router();
 const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage: storage , limits: { fileSize: 900 * 1024 * 1024}})
 router.use(authMiddlware);
 
 
@@ -112,6 +114,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
 
         console.log("filename_path in /api/upload:", filename_path);
         await uploadQueue.add('process-upload', {
+            // fileBuffer: file.buffer,
             filename_path,
             videoId,
             userId: user_id,
@@ -179,11 +182,12 @@ router.get("/processing-status", async (req: any, res: any) => {
 
 const worker = new Worker('uploadQueue', async job => {
     console.log(`PROCESSING JOB ${job.id} IN WORKER`);
+    // const { fileBuffer, filename_path, videoId, userId, title } = job.data
     const { filename_path, videoId, userId, title } = job.data
     const outputDir = '/var/html/media';
     const inFile = path.join(outputDir, filename_path);
     // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
-
+    // fs.writeFileSync(inFile, Buffer.from(fileBuffer));
     // create output directory if it doesn't exist
     if (!fs.existsSync(inFile)) {
         console.log("INPUT FILE DOES NOT EXIST IN WORKER");
@@ -194,22 +198,26 @@ const worker = new Worker('uploadQueue', async job => {
     const command = `bash ${scriptPath} ${filename_path} ${videoId}`;
 
     //exec will have a mutex lock to finish command run first then it will run the callback to update video
-    exec(command, async (error, stdout, stderr) => {
-        if (error) {
-            console.log(`Error processing video in /api/upload: ${error.message}`);
-            await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
-            return;
-        }
+    // return new Promise((resolve, reject) => {
+        exec(command, async (error, stdout, stderr) => {
+            if (error) {
+                console.log(`Error processing video in /api/upload: ${error.message}`);
+                await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+                // reject(error);
+                return;
+            }
 
-        // Update video metadata with status 'complete'
-        await db.update(video).set({
-            status: 'complete',
-            manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
-            thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
-        }).where(eq(video.id, videoId));
-
-    })
-}, {connection: redisConfig})
+            console.log("ffmpeg output:", stdout);
+            // Update video metadata with status 'complete'
+            await db.update(video).set({
+                status: 'complete',
+                manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
+                thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
+            }).where(eq(video.id, videoId));
+            // resolve(true);
+        });
+    // });
+}, {connection: redisConfig, concurrency: 1})
 
 worker.on('active', job => {
     console.log(`process-upload job ${job.id} is now active. working on it!`);
