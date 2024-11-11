@@ -38,7 +38,7 @@ router.post("/like", async (req: any, res: any) => {
             await db.update(video).set({
                 like: sql`${video.like} + 1`,
             }).where(eq(video.id,id));
-            if(like_query[0].liked === false) //if it was originally disliked
+            if(like_query[0] !== undefined && like_query[0].liked === false) //if it was originally disliked
                 await db.update(video).set({
                     dislike: sql`${video.dislike} - 1`
                 }).where(eq(video.id,id));
@@ -48,7 +48,7 @@ router.post("/like", async (req: any, res: any) => {
             await db.update(video).set({
                 dislike: sql`${video.dislike} + 1`,
             }).where(eq(video.id,id));
-            if(like_query[0].liked === true)
+            if(like_query[0] !== undefined && like_query[0].liked === true)
                 await db.update(video).set({
                     like: sql`${video.like} - 1`
                 }).where(eq(video.id,id));
@@ -58,7 +58,7 @@ router.post("/like", async (req: any, res: any) => {
         // Allow a logged in user to “like” a post specified by id. value = true  if thumbs up, value = false if thumbs down and null if the user did not “like” or “dislike” the video.
         // Response format: {likes: number} which is the number of likes on the post. This api should return an error if the new “value” is the same as was already previously set.
     } catch(err) {
-        return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like"});
+        return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
     }
 });
 

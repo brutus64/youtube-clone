@@ -2,10 +2,10 @@ import { db } from '../drizzle/db';
 import { video } from '../drizzle/schema'
 import fs from 'fs';
 
-// const mediaPath = "/var/html/media"
-const mediaPath = "D:/Junior/CSE 356/youtube-clone/youtube-clone/backend/media"
+const mediaPath = "/var/html/media"
+
 async function initVideos() {
-    fs.readFile(mediaPath+'/m2.json', 'utf8', async (err, data) => {
+    fs.readFile(mediaPath+'/m2.json', 'utf8', async (err: any, data: any) => {
         if(err)
             console.log("ERROR: "+err)
         let dataParsed = JSON.parse(data);
@@ -15,6 +15,7 @@ async function initVideos() {
             const jpgPath = mediaPath + "/v"+i+".jpg";
             // console.log(title +" "+ mpdPath +" "+ jpgPath);
             await db.insert(video).values({
+                id: "v"+i,
                 title: title,
                 description: title,
                 like: 0,
