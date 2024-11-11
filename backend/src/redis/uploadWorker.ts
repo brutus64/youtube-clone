@@ -20,7 +20,7 @@ const worker = new Worker('uploadQueue', async job => {
     }
 
     // run the bash script to process the video
-    const scriptPath = path.join('/root/youtube-clone/dash-script/milestone2','dashscript.sh');
+    const scriptPath = path.join('/var/html/milestone2','dashscript.sh');
     const command = `bash ${scriptPath} ${filename_path} ${videoId}`;
 
     //exec will have a mutex lock to finish command run first then it will run the callback to update video
@@ -52,6 +52,8 @@ worker.on('completed', job => {
 worker.on('failed', (job : any,err) => {
     console.log(`job failed to upload ${job.id} with err: ${err.message}`)
 });
-
-console.log("Worker started?");
+worker.on('ready', () => {
+    console.log('Worker successfully connected to Redis');
+});
+// console.log("Worker started?");
 export default worker;
