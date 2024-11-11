@@ -39,9 +39,13 @@ const worker = new Worker('uploadQueue', async job => {
     });
 })
 
+worker.on('active', job => {
+    console.log(`process-upload job ${job.id} is now active. working on it!`);
+});
+
 worker.on('completed', job => {
     console.log(`process-upload job ${job.id} has completed!`);
-})
+});
 
 worker.on('failed', (job : any,err) => {
     console.log(`job failed to upload ${job.id} with err: ${err.message}`)
