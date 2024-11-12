@@ -34,6 +34,7 @@
     "compute-cosine-similarity": "^1.1.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
+    "disco-rec": "^0.2.0",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.26.2",
     "drizzle-orm": "^0.35.3",
