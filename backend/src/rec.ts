@@ -78,7 +78,7 @@ export async function recommend(uid: number, num: number) {
             description:video.description,
             title:video.title,
             likevalues:video.like
-        }).from(video).where(notInArray(video.id,uidViews));
+        }).from(video).where(and(notInArray(video.id,uidViews),eq(video.status,"complete")));
         shuffle(unwatched);
         const notReccAndUnwatched = unwatched.filter(vidobj => !recommendation_ids.includes(vidobj.id));
         
@@ -99,13 +99,14 @@ export async function recommend(uid: number, num: number) {
                 description:video.description,
                 title:video.title,
                 likevalues:video.like
-            }).from(video).where(inArray(video.id,uidViews)).limit(num-recommendations.length);
+            }).from(video).where(and(eq(video.status,"complete"),inArray(video.id,uidViews))).limit(num-recommendations.length);
             watched.forEach(async (vidobj:any) => {
                 vidobj.watched = true;
                 vidobj.liked = await db.select({liked:vid_like.liked}).from(vid_like).where(
                     and(
                         eq(vid_like.user_id,uid),
-                        eq(vid_like.video_id,vidobj.id)
+                        eq(vid_like.video_id,vidobj.id),
+                        eq(video.status,"complete")
                     )
                 )
                 recommendations.push(vidobj);

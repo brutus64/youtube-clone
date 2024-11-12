@@ -39,8 +39,8 @@ const VideoPlayer = ({ vidData,visible }) => {
             
             <button name="dislike" id="dislike" onClick={()=>handleLike(false)}></button>
           </div>
-          <div id="playPauseBtn">
-            <button onClick={handlePlayPause}>{isPlaying ? "Pause" : "Play"}</button>
+          <div id={visible ? "playPauseBtn" : "notPlayPauseBtn"} onClick={handlePlayPause}>
+            <button>{isPlaying ? "Pause" : "Play"}</button>
           </div>
         </div>
         

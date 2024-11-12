@@ -11,7 +11,7 @@ router.post("/videos", async (req: any, res: any) => {
     try{
         const { count } = req.body;
         const ret_arr = await recommend(req.user_id,count);
-        console.log(ret_arr);
+        console.log("FINAL RETURN ARRAY:",ret_arr);
         return res.status(200).json({status:"OK", videos:ret_arr})
     }catch(err){
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error on /api/videos, most likely when reading file"});

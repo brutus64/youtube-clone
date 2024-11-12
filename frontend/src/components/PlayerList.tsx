@@ -52,7 +52,7 @@ const PlayerList = () => {
             //console.log("DOWN")
             // check if next page exists
             
-            if (videoref.current.ind !== videoref.current.vidList.length-1) {
+            if (videoref.current.ind < videoref.current.vidList.length-3) {
                 videoref.current.ind += 1;
                 navigate(`/play/${videoref.current.vidList[videoref.current.ind].id}`);
             }
@@ -69,15 +69,15 @@ const PlayerList = () => {
     useEffect(() => { //clear state on page reload
 
         console.log("reload")
-        videoref.current.vidList = [{
-            id:id,
-            description:"start video",
-            title:"potato",
-            watched:false,
-            liked:null,
-            likevalues:69
-        }];
         fetchVideoId(9).then(res => {
+            videoref.current.vidList = [{
+                id:id,
+                description:"start video",
+                title:"potato",
+                watched:false,
+                liked:null,
+                likevalues:69
+            }];
             videoref.current.vidList.push.apply(videoref.current.vidList,res);
             setMoreVideos(true);
         });
@@ -93,8 +93,9 @@ const PlayerList = () => {
     }, []);
     // console.log("Rerender happened")
     return (
+
         <div className="video-list">
-            {videoref.current.vidList.map((vidData,i) => 
+            {moreVideos && videoref.current.vidList.map((vidData,i) => 
                 <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
             )}
         </div>
