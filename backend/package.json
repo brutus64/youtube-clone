@@ -31,6 +31,7 @@
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "bullmq": "^5.25.4",
+    "compute-cosine-similarity": "^1.1.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

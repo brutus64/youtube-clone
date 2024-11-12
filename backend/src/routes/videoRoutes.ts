@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddlware } from "../middleware/auth";
 import { db } from "../drizzle/db";
-import { video, view, vid_like } from "../drizzle/schema";
+import { video, view, vid_like, user } from "../drizzle/schema";
 import { and, eq, sql } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
@@ -35,6 +35,7 @@ console.log("VALUE: "+value);
         const db_like_status = like_query[0]?.liked;
 console.log("db_like_status: "+db_like_status);
         //video never seen or liked before
+        //SHOULD BE IMPOSSIBLE NOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if(like_query.length === 0){
             const like_record = {
                 user_id: req.user_id,
@@ -66,7 +67,7 @@ console.log("db_like_status: "+db_like_status);
                 dislike: sql`${video.dislike} + 1`
             }).where(eq(video.id,id));
             // insertRating(req.user_id,id,"dislike");
-        } else if (db_like_status === true && value === null){
+        } else if (db_like_status === true && value === null){ //should literally be impossible can't click same button twice
             await db.update(video).set({
                 like: sql`${video.like} - 1`
             }).where(eq(video.id,id));
@@ -77,7 +78,7 @@ console.log("db_like_status: "+db_like_status);
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
             // insertRating(req.user_id,id,"like");
-        } else if (db_like_status === false && value === null) {
+        } else if (db_like_status === false && value === null) { //should literally be impossible can't click same button twice
             await db.update(video).set({
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
@@ -149,14 +150,20 @@ router.post("/view", async (req: any, res: any) => {
                 video_id: id,
                 viewed: true,
             });
+            await db.update(video).set({views: sql`${video.views} + 1`});
         }
-        else
-            viewed_before = true;
-
-        // insertRating(req.user_id,id,"view");
-        // POST /api/view { id }
-        // Mark video “id” as viewed by the logged in user.  This API call should be made by the UI on videos that were not previously watched whenever that video is first “played” for the user. 
-        // Response format: {viewed: Boolean}, viewed = true if user has viewed this post before and false otherwise
+        else{
+            //worker inserted view before, if view is originally false, we change to true
+            if(view_query[0].viewed === false){
+                await db.update(view).set({viewed: true}).where(eq(req.user_id,view.user_id));
+                await db.update(video).set({views: sql`${video.views} + 1`});
+                console.log("False to true! /api/views")
+            }
+            else{
+                console.log("what the hell, you trying to turn true into true? /api/views");
+                viewed_before = true;
+            }
+        }
         return res.status(200).json({status: "OK", viewed: viewed_before});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error at /api/view"});
