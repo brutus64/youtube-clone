@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@types/connect-pg-simple": "^7.0.3",
+    "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "bullmq": "^5.25.4",
     "compute-cosine-similarity": "^1.1.0",
