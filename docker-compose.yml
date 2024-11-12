@@ -86,6 +86,14 @@ services:
     # ports:
     #   - "5173:5173"
     network_mode: host
+  recommendation:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    network_mode: host
 
   nginx:
     image: nginx:latest

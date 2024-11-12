@@ -15,6 +15,6 @@
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
     "types": ["node"]
   },
-  "include": ["./src/**/*.ts", "*.ts", "disco-rec.d.ts"],
+  "include": ["./src/**/*.ts", "*.ts"],
   "exclude": ["node_modules"]
 }
