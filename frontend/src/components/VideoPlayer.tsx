@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ReactPlayer from 'react-player'
 import axios from 'axios';
+import { useEffect } from 'react';
 
 //BONUS: Displaying the like and dislikes prior and post clicking
 const VideoPlayer = ({ vidData,visible }) => {
@@ -21,6 +22,22 @@ const VideoPlayer = ({ vidData,visible }) => {
         console.log("error in api call to /api/like at VideoPlayer.tsx: ", err);
       }
     }
+
+    useEffect(()=> {
+      const handleView = async() => {
+        try {
+          if(isPlaying){
+            const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/view", {id:vidData.id});
+            if(res.data){
+              console.log("video is viewed");
+            }
+          }
+        } catch(err){
+          console.log("error in api call to /api/view at VideoPlayer.tsx", err);
+        }
+      }
+      handleView();
+    },[isPlaying, vidData.id])
 
     return (
     <div className="video-box" style={{display: (visible ? "flex" : "none") }}>

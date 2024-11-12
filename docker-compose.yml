@@ -87,6 +87,13 @@ services:
     #   - "5173:5173"
     network_mode: host
 
+  recommendation:
+    build:
+      context: ./recommendation
+    network_mode: host
+    depends_on:
+      - db
+
   nginx:
     image: nginx:latest
     volumes:
