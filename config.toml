@@ -8,7 +8,7 @@
 #   postgresql://bob:secret@1.2.3.4:5432/mydb?sslmode=verify-full
 #   mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
 #   mongodb+srv://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
-cache_store = "redis://localhost:6379/0"
+cache_store = ""
 
 # The database for persist data, support MySQL, Postgres, ClickHouse and MongoDB:
 #   mysql://[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
@@ -73,7 +73,7 @@ admin_api_key = ""
 default_n = 10
 
 # Secret key for RESTful APIs (SSL required).
-api_key = "MlmuDfkcU4Wl2SzGtfwSOhTVXKG2Pgmq"
+api_key = ""
 
 # Clock error in the cluster. The default value is 5s.
 clock_error = "5s"

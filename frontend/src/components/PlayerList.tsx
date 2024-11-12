@@ -83,7 +83,7 @@ const PlayerList = () => {
         });
         videoref.current.ind = 0;
     }, []);
-    console.log("rerender")
+    // console.log("rerender")
     
     useEffect(() => {
         window.addEventListener("wheel", handleWheel);

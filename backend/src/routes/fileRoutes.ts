@@ -7,10 +7,10 @@ const router = Router();
 router.use(authMiddlware);
 
 // parameter in body count req.body
-router.post("/videos", (req: any, res: any) => {
+router.post("/videos", async (req: any, res: any) => {
     try{
         const { count } = req.body;
-        const ret_arr = recommend(req.user_id,count);
+        const ret_arr = await recommend(req.user_id,count);
         console.log(ret_arr);
         return res.status(200).json({status:"OK", videos:ret_arr})
     }catch(err){

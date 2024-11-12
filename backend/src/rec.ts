@@ -3,36 +3,53 @@ import { db } from "./drizzle/db";
 import { vid_like,video,view } from "./drizzle/schema";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
-const client = new Gorse({
-    endpoint: "http://127.0.0.1:8088",
-    secret:"MlmuDfkcU4Wl2SzGtfwSOhTVXKG2Pgmq"
-})
+// const client = new Gorse({
+//     endpoint: "http://127.0.0.1:8088",
+//     secret:""
+// })
 
-export function insertRating(uid: string, vid: string, type: string) {
-    client.upsertFeedbacks([{
-        FeedbackType: type,
-        UserId: uid,
-        ItemId: vid,
-        Timestamp: new Date()
-    }]); //upsert overwrites past feedback (desired)
-}
+// export function insertRating(uid: string, vid: string, type: string) {
+//     client.upsertFeedbacks([{
+//         FeedbackType: type,
+//         UserId: uid,
+//         ItemId: vid,
+//         Timestamp: new Date()
+//     }]); //upsert overwrites past feedback (desired)
+// }
 
 
-export function deleteRating(uid: string, vid: string, type: string) {
-    client.deleteFeedback({
-        type: type,
-        userId: uid,
-        itemId: vid,
-    });
-}
+// export function deleteRating(uid: string, vid: string, type: string) {
+//     client.deleteFeedback({
+//         type: type,
+//         userId: uid,
+//         itemId: vid,
+//     });
+// }
+
+function shuffle(array) {
+    let currentIndex = array.length;
+  
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element...
+      let randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  }
 
 // return list of <num> video ids
 export async function recommend(uid: number, num: number) {
     console.log("Getting recommendations...")
-    const recommendation_ids = await client.getRecommend({
-        userId: uid.toString(),
-        cursorOptions: {n: num},
-    });
+    // const recommendation_ids = await client.getRecommend({
+    //     userId: uid.toString(),
+    //     cursorOptions: {n: num},
+    // });
+    const recommendation_ids = [];
     // Response format:
     // - id
     // - description (video)
@@ -62,6 +79,7 @@ export async function recommend(uid: number, num: number) {
             title:video.title,
             likevalues:video.like
         }).from(video).where(notInArray(video.id,uidViews));
+        shuffle(unwatched);
         const notReccAndUnwatched = unwatched.filter(vidobj => !recommendation_ids.includes(vidobj.id));
         
         for (let i = 0; i < notReccAndUnwatched.length; i++) {
