@@ -35,8 +35,8 @@ export const video = pgTable("video", {
 //user and videos relationship: Many to Many, a user can like multiple videos
 //a video can be liked by mulltiple users
 export const vid_like = pgTable("vid_like", {
-    user_id: integer("user_id").references(() => user.id),
-    video_id: text("video_id").references(() => video.id),
+    user_id: integer("user_id").notNull().references(() => user.id),
+    video_id: text("video_id").notNull().references(() => video.id),
     liked: boolean("liked"),
 }, (table) => {
     return {
