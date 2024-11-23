@@ -94,7 +94,7 @@ const PlayerList = () => {
     // console.log("Rerender happened")
     return (
 
-        <div className="video-list">
+        <div className="flex items-center flex-col">
             {moreVideos && videoref.current.vidList.map((vidData,i) => 
                 <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
             )}

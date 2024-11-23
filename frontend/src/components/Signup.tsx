@@ -37,9 +37,9 @@ const Signup = () => {
     }
     return (
         <div id="signup-form">
-            <form>
+            <form className='flex flex-col gap-3 items-center mt-12'>
                 <div>
-                    <label htmlFor="username"><h1>Username</h1></label>
+                    <label htmlFor="username"><h1 className='mb-5 text-xl'>Username</h1></label>
                     <input 
                         type="text" 
                         id="signup-user" 
@@ -50,7 +50,7 @@ const Signup = () => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="password"><h1>Password</h1></label>
+                    <label htmlFor="password"><h1 className='mb-5 text-xl'>Password</h1></label>
                     <input 
                         type="password" 
                         id="signup-password" 
@@ -60,7 +60,7 @@ const Signup = () => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="email"><h1>Email</h1></label>
+                    <label htmlFor="email"><h1 className='mb-5 text-xl'>Email</h1></label>
                     <input 
                         type="email" 
                         id="signup-email" 
@@ -70,10 +70,10 @@ const Signup = () => {
                     />
                 </div>
                 <div>
-                    <button className="submit-button" onClick={submitSignup}>Sign up</button>
+                    <button className="hover:opacity-90 active:opacity-90" onClick={submitSignup}>Sign up</button>
                 </div>
                 <div>
-                    <Link to="/">I have an account already</Link>
+                    <Link to="/" className='text-red-600 text-xl hover:underline'>I have an account already</Link>
                 </div>
                 <div>
                     {bottomMsg}

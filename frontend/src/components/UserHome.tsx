@@ -4,8 +4,8 @@ import VideoList from "./VideoList";
 
 const UserHome = () => {
     return (
-        <div id="home-page">
-            <h1>Hello!</h1>
+        <div id="home-page" className='m-3 text-center'>
+            <h1 className='text-4xl'>Hello!</h1>
             <VideoList />
         </div>
     )

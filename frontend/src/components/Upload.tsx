@@ -34,7 +34,7 @@ const Upload = () => {
     }
     return(
         <>
-            <form onSubmit={handleUpload}>
+            <form onSubmit={handleUpload} className='flex flex-col gap-3 items-center mt-12'>
                 <div>
                     <label htmlFor="title">Title</label>
                     <input 

@@ -31,7 +31,7 @@ const VideoList = () => {
         fetchVideoIds();
     },[]);
     return (
-        <div className="thumbnail-list-box">
+        <div className="grid overflow-auto gap-2 p-3 grid-cols-auto-fit-400">
             {videosIds.map(id =>
                 <Thumbnail key={id} vid={id}/>
             )}

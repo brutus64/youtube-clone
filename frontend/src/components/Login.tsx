@@ -42,9 +42,9 @@ const Login = () => {
     }
     return (
         <div id="login-form">
-            <form onSubmit={submitLogin}>
+            <form onSubmit={submitLogin} className='flex flex-col gap-3 items-center mt-12'>
                 <div>
-                    <label htmlFor="username"><h1>Username</h1></label>
+                    <label htmlFor="username"><h1 className='mb-5 text-xl'>Username</h1></label>
                     <input 
                         type="text" 
                         id="login-user" 
@@ -55,7 +55,7 @@ const Login = () => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="password"><h1>Password</h1></label>
+                    <label htmlFor="password"><h1 className='mb-5 text-xl'>Password</h1></label>
                     <input 
                         type="password" 
                         id="login-password" 
@@ -65,10 +65,10 @@ const Login = () => {
                     />
                 </div>
                 <div>
-                    <button className="submit-button" type='submit'>Login</button>
+                    <button className="hover:opacity-90 active:opacity-90" type='submit'>Login</button>
                 </div>
                 <div>
-                    <Link to="/signup">I don't have an account</Link>
+                    <Link to="/signup" className='text-red-600 text-xl hover:underline'>I don't have an account</Link>
                 </div>
                 <div>
                     {bottomMsg}

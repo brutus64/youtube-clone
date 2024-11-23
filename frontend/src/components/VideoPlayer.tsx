@@ -43,24 +43,24 @@ const VideoPlayer = ({ vidData,visible }) => {
     }
 
     return (
-    <div className="video-box" style={{display: (visible ? "flex" : "none") }}>
-        <h1>{vidData.title}</h1>
+    <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-400 flex flex-col justify-center items-center gap-2.5 rounded-2xl" style={{display: (visible ? "flex" : "none") }}>
+        <h1 className='m-0'>{vidData.title}</h1>
         <ReactPlayer 
           playing={isPlaying}
           url={"/media/"+vidData.id+".mpd"}
           controls={true}
         />
-        <div className="video-data">
-          <div className="like-dislike-box">
-            <div className="like-box">
-              <button name="like" id="like" onClick={()=>handleLike(true)}></button>
+        <div className="flex items-center justify-center gap-24 flex-1 self-stretch">
+          <div className="flex items-center gap-1 justify-between text-2xl rounded-3xl p-2 w-48">
+            <div className="flex font-sans gap-2 items-center border-r-solid border-r-1 border-r-gray flex-2">
+              <button name="like" className='bg-like m-0 p-0 size-16' onClick={()=>handleLike(true)}></button>
               {vidData.likevalues}
             </div>
             
-            <button name="dislike" id="dislike" onClick={()=>handleLike(false)}></button>
+            <button name="dislike" className='bg-dislike m-0 p-0 size-16' onClick={()=>handleLike(false)}></button>
           </div>
           <div id={visible ? "playPauseBtn" : "notPlayPauseBtn"} onClick={handlePlayPause}>
-            <button>{isPlaying ? "Pause" : "Play"}</button>
+            <button className='w-52'>{isPlaying ? "Pause" : "Play"}</button>
           </div>
         </div>
         
