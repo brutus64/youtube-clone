@@ -31,18 +31,13 @@ fps=$(ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 
 fps=$(awk "BEGIN {print int(($fps) + 0.5)}") # fps=24000/1001 ==> 30
 
 ffmpeg -re -i "$outvid" \
-    -map 0:v -map 0:v -map 0:v -map 0:v -map 0:v -map 0:v -map 0:v -map 0:v \
+    -map 0:v -map 0:v -map 0:v \
     -map 0:a? \
     -c:a aac -ar:a 48000 -b:a 253k -ac 2 \
     -c:v libx264 \
-    -b:v:0 254k -profile:v:0 main -s:v:0 320x180 \
-    -b:v:1 507k -profile:v:1 main -s:v:1 320x180 \
-    -b:v:2 759k -profile:v:2 main -s:v:2 480x270 \
-    -b:v:3 1013k -profile:v:3 main -s:v:3 640x360 \
-    -b:v:4 1254k -profile:v:4 main -s:v:4 640x360 \
-    -b:v:5 1883k -profile:v:5 main -s:v:5 768x432 \
-    -b:v:6 3134k -profile:v:6 main -s:v:6 1024x576 \
-    -b:v:7 4952k -profile:v:7 main -s:v:7 1280x720 \
+    -b:v:0 512k -profile:v:0 main -s:v:0 640x360 \
+    -b:v:1 768k -profile:v:1 main -s:v:1 960x540 \
+    -b:v:2 1024k -profile:v:2 main -s:v:2 1280x720 \
     -bf 1 -keyint_min $fps -g $fps -sc_threshold 0 -b_strategy 0 \
     -adaptation_sets "id=0,streams=v id=1,streams=a" \
     -init_seg_name "v${id}_init_\$RepresentationID\$.\$ext\$" \
