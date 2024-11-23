@@ -8,14 +8,18 @@ import fs from "fs";
 import multer from "multer";
 import { exec } from "child_process";
 import { uploadQueue } from "../redis/uploadQueue";
-// import { insertRating } from "../rec";
 import { Worker } from "bullmq";
 import { redisConfig } from "../configs/redisConfig";
 
 const router = Router();
+
+//Ideal to actually insert the video into filesystem rather than send it to memory, disk is faster than network transfer in the case of the server we're running
 const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
+
+//The option to use in memory storage for uploading video files.
 // const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage , limits: { fileSize: 900 * 1024 * 1024}})
+
 router.use(authMiddlware);
 
 
@@ -23,18 +27,19 @@ router.use(authMiddlware);
 router.post("/like", async (req: any, res: any) => {
     try {
         const { id, value } = req.body;
-        //check if video_likes already exist 
+
+
+        //Checks if Video Exists
         const video_query = await db.select().from(video).where(eq(video.id, id));
         if (video_query.length === 0)
             return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
-console.log("VALUE: "+value);
 
-        //check if vid_like exists already
+        //Check if Video has been interacted before with Like or Dislike Button
         const like_query = await db.select().from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
-
         const db_like_status = like_query[0]?.liked;
-console.log("db_like_status: "+db_like_status);
-        //video never seen or liked before
+        console.log("db_like_status: "+db_like_status);
+
+        //Never interacted before, add entry
         if(like_query.length === 0){
             const like_record = {
                 user_id: req.user_id,
@@ -42,6 +47,8 @@ console.log("db_like_status: "+db_like_status);
                 liked: value, //can be null
             };
             await db.insert(vid_like).values(like_record);
+
+            //adapt like/dislike count
             if (value === true) {
                 await db.update(video).set({
                     like: sql`${video.like} + 1`
@@ -52,38 +59,39 @@ console.log("db_like_status: "+db_like_status);
                 }).where(eq(video.id, id));
             }
         } 
-        else { //like_query already exists
+        //Check for Same Value --> Return: Error
+        else {
             //
             if(db_like_status === value)
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
         }
+
+        //Update the DB with new liked value.
         await db.update(vid_like).set({ liked: value }).where(and(eq(vid_like.user_id,req.user_id),eq(vid_like.video_id,id)));
-        //START UPDATING VIDEO DATA DEPENDING ON LIKE VALUE
-        //already confirmed to be different values
+
+
+        //Adapt like/dislike count in videos table.
         if (db_like_status === true && value === false) {
             await db.update(video).set({
                 like: sql`${video.like} - 1`,
                 dislike: sql`${video.dislike} + 1`
             }).where(eq(video.id,id));
-            // insertRating(req.user_id,id,"dislike");
         } else if (db_like_status === true && value === null){
             await db.update(video).set({
                 like: sql`${video.like} - 1`
             }).where(eq(video.id,id));
-            // insertRating(req.user_id,id,"view");
         } else if (db_like_status === false && value === true) {
             await db.update(video).set({
                 like: sql`${video.like} + 1`,
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
-            // insertRating(req.user_id,id,"like");
         } else if (db_like_status === false && value === null) {
             await db.update(video).set({
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
-            // insertRating(req.user_id,id,"dislike");
         }
         
+        //Return the new amount of likes in this video.
         const new_record = await db.select({like: video.like}).from(video).where(eq(video.id,id));
         return res.status(200).json({ status:"OK", likes: new_record[0].like });
         
@@ -92,20 +100,25 @@ console.log("db_like_status: "+db_like_status);
     }
 });
 
-//multer handling mp4File will go into req.file
+//multer handling mp4File will upload to "/var/html/media"
 router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
     try{
         console.log("ACCEPTING REQUEST TO /api/upload");
         const { author, title } = req.body;
         const file = req.file;
         const user_id = req.user_id;
+
+        //If video file isn't uploaded, return ERROR
         if (!file) 
             return res.status(200).json({ status: "ERROR", error: true, message: "No file uploaded at /api/upload" });
+        
+        //rename the uploaded file to have ".mp4" as multer does not handle extensions when uploading.
         const originalPath = file.path;
         const newPath = originalPath + '.mp4';
         fs.renameSync(originalPath, newPath);
         const fileName = file.filename;
-        //inserts into db basic stuff and gets id of video
+
+        //Inserts into Video Table, the metadata for the video
         const [video_id] = await db.insert(video).values({
             id: `v${fileName}`,
             title: title, 
@@ -114,10 +127,13 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             manifest_path: '',
             thumbnail_path: '',
         }).returning( { id: video.id });
+
         const videoId = video_id.id;
         const filename_path = file.filename + '.mp4';
 
         console.log("filename_path in /api/upload:", filename_path);
+
+        //Adds the job to the Queue (BullMQ) to be done by a Worker
         await uploadQueue.add('process-upload', {
             // fileBuffer: file.buffer,
             filename_path,
@@ -125,6 +141,8 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             userId: user_id,
             title
         });
+
+        //return the video ID
         console.log("VIDEOID upload:",videoId);
         return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
@@ -135,14 +153,12 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
 router.post("/view", async (req: any, res: any) => {
     try {
         const { id } = req.body;
+
+        //Query "View" Table to see if it existed before or not (has scrolled past it before/played it before or not)
         const view_query = await db.select().from(view).where(and(eq(view.video_id,id),eq(view.user_id,req.user_id)));
-
-        //never viewed before
-
-        //Theory: It should be impossibled for a view row to be created if this is never called before, impossible for view to be false.
-        //*************************************************************** */
-        //MAY NEED TO CHANGE LATER DEPENDING ON IMPLEMENTATION OF UPLOAD, COULD INSERT VALUES AT THAT POINT OR JUST DO IT ONLY WHEN THIS IS CALLED
         let viewed_before = false;
+
+        //Never seen before: Insert into View Table "True" as you went to that page. Also increment "views" in "Video" Table
         if(view_query.length === 0) {
             await db.insert(view).values({
                 user_id: req.user_id,
@@ -153,13 +169,11 @@ router.post("/view", async (req: any, res: any) => {
                 views: sql`${video.views} + 1` 
             })
         }
+        //Else Query exists, then it must've been viewed before. Idea: For a "View" record to exist, you must interact with the Video --> in other words it has to be "Viewed" if a record exists.
         else
             viewed_before = true;
 
-        // insertRating(req.user_id,id,"view");
-        // POST /api/view { id }
-        // Mark video “id” as viewed by the logged in user.  This API call should be made by the UI on videos that were not previously watched whenever that video is first “played” for the user. 
-        // Response format: {viewed: Boolean}, viewed = true if user has viewed this post before and false otherwise
+        //Return data about whether it was viewed before or not.
         return res.status(200).json({status: "OK", viewed: viewed_before});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error at /api/view"});
@@ -173,16 +187,19 @@ interface VideoStatus {
 }
 router.get("/processing-status", async (req: any, res: any) => {
     try{
-// console.log("user ids: "+req.user_id,video.uploaded_by);
+        //Query "Video" table to obtain video metadata about all videos uploaded by user
         const video_query = await db.select().from(video).where(eq(req.user_id,video.uploaded_by));
         const videos: VideoStatus[] = [];
+
+        //Append into an array, object of video metadata containing {VideoID, Title, Status}
         if(video_query.length > 0){
             video_query.forEach(vid => {
                 console.log("ID: ", vid.id, '\nTITLE: ', vid.title, '\nSTATUS:', vid.status);
                 videos.push({id: vid.id, title: vid.title, status: vid.status});
             })
         }
-        //im assuming it is okay to return empty array if there's nothing uploaded
+        
+        //Return array
         return res.status(200).json({status: "OK", videos: videos});
     }catch(err){
         console.log("internal server error at /api/processing-status:", err);
@@ -192,43 +209,47 @@ router.get("/processing-status", async (req: any, res: any) => {
 
 const worker = new Worker('uploadQueue', async job => {
     console.log(`PROCESSING JOB ${job.id} IN WORKER`);
+    // Situation: If we had to upload from memoryStorage (multer) into disk, use this.
     // const { fileBuffer, filename_path, videoId, userId, title } = job.data
+    // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
+    // fs.writeFileSync(inFile, Buffer.from(fileBuffer));
+
     const { filename_path, videoId, userId, title } = job.data
     const outputDir = '/var/html/media';
     const inFile = path.join(outputDir, filename_path);
-    // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
-    // fs.writeFileSync(inFile, Buffer.from(fileBuffer));
-    // create output directory if it doesn't exist
+
+
+    // Check that MP4 File exists at correct path
     if (!fs.existsSync(inFile)) {
         console.log("INPUT FILE DOES NOT EXIST IN WORKER");
     }
 
-    // run the bash script to process the video
+    // Obtain bash script command to run FFMPEG script.
     const scriptPath = path.join('/var/html/milestone2','dashscript.sh');
     const command = `bash ${scriptPath} ${filename_path} ${videoId}`;
 
     //exec will have a mutex lock to finish command run first then it will run the callback to update video
-    // return new Promise((resolve, reject) => {
-        exec(command, async (error, stdout, stderr) => {
-            if (error) {
-                console.log(`Error processing video in /api/upload: ${error.message}`);
-                await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
-                // reject(error);
-                return;
-            }
+    exec(command, async (error, stdout, stderr) => {
+        if (error) {
+            console.log(`Error processing video in /api/upload: ${error.message}`);
+            await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+            return;
+        }
 
-            console.log("ffmpeg output:", stdout);
-            // Update video metadata with status 'complete'
-            await db.update(video).set({
-                status: 'complete',
-                manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
-                thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
-            }).where(eq(video.id, videoId));
-            // resolve(true);
-        });
-    // });
+        console.log("ffmpeg output:", stdout);
+        // Update video metadata with status 'complete'
+        await db.update(video).set({
+            status: 'complete',
+            manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
+            thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
+        }).where(eq(video.id, videoId));
+    });
+
+    //Workers run in the backend and execute the jobs, the jobs are in a queue stored in redis, workers puts a mutex lock on the job when working and has to update statuses in Redis durign it's work process through it.
 }, {connection: redisConfig, concurrency: 1})
 
+
+//Worker progress report prints:
 worker.on('active', job => {
     console.log(`process-upload job ${job.id} is now active. working on it!`);
 });

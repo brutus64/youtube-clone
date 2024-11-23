@@ -27,13 +27,13 @@ router.post("/videos", async (req:any , res:any) => {
     try {
         const { count } = req.body;
 
-        //these are all the users
+        //User query: get all users to then do cosine similiarity between them
         const users = await db.select().from(user);
 
-        //these are all the likes in videos
+        //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
         const all_likes = await db.select().from(vid_like);
 
-        //we want to avoid these videos for user
+        //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
         const avoid_viewed_videos = await db.select().from(view).where(
             and(
                 eq(view.user_id,req.user_id),
@@ -41,7 +41,7 @@ router.post("/videos", async (req:any , res:any) => {
             )
         );
 
-        //we only want to recommend completed videos
+        //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
         const all_videos = await db.select().from(video).where(
             eq(video.status,"complete")
         );
@@ -49,6 +49,8 @@ router.post("/videos", async (req:any , res:any) => {
         //     1: {video.id: -1,0,1},
         //     2
         // ]
+
+        // Create a matrix with Row: User, Column: Video ID, each cell is -1,0,1 for disliked, null, liked respectively
         const user_matrix: UserMatrix = {};
         users.forEach(u => {
             user_matrix[u.id] = {};
@@ -73,7 +75,9 @@ router.post("/videos", async (req:any , res:any) => {
         // function getValue(d: { [key: string]: number }, i: number, j: number): number {
         //     return Object.values(d)[i];
         // }
+        
 
+        //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key user id
         const similarities: Similarities[] = [];
         users.forEach(u => {
             if(u.id !== req.user_id) {
@@ -89,7 +93,7 @@ router.post("/videos", async (req:any , res:any) => {
         //sort users by most similar user
         similarities.sort((a,b) => b.similar - a.similar);
 
-        //get similar user's liked videos
+        //1st Choice: Recommend other similar user's videos that hasn't been seen before
         const rec_videos:string[] = [];
         for (const similiar_users of similarities){
             if(similiar_users.similar > 0.0) { //kinda similar
@@ -105,7 +109,7 @@ router.post("/videos", async (req:any , res:any) => {
             }
         }
         
-        //get random videos if not enough, that's not viewed
+        //2nd Choice: Recommend random unseen videos
         if(rec_videos.length < count) {
             const unwatched_videos = all_videos.filter(v => !avoid_viewed_videos.some(view => view.video_id === v.id)); //as long as the video is not a video that's viewed already
             while(rec_videos.length < count && unwatched_videos.length > 0) {
@@ -115,7 +119,7 @@ router.post("/videos", async (req:any , res:any) => {
             }
         }
 
-        //if still not enough get random videos even if it's viewed
+        //3rd Choice: (Final fallback) Recommend random seen videos
         if(rec_videos.length < count) {
             const leftover_vid = all_videos.filter(v => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
             while(rec_videos.length < count && leftover_vid.length > 0){
@@ -125,6 +129,7 @@ router.post("/videos", async (req:any , res:any) => {
             }
         }
 
+        //Obtain data from recommended video id in the form of [{id,desc,title,watched,liked,# likes}]
         const details = await Promise.all(
             rec_videos.map(async (rec_vid_id: string) => {
                 const video_data = await db.select().from(video).where(eq(video.id,rec_vid_id)); //get the video data
@@ -169,11 +174,16 @@ router.post("/videos", async (req:any , res:any) => {
     }
 })
 
-router.get("/manifest/:id", (req: any, res: any) => {
+//Obtains manifest id
+router.get("/manifest/:id", async (req: any, res: any) => {
     try{
         const id = req.params.id;
+        //perhaps switch to using the db then getting the path off of it?
+        const video_query = await db.select().from(video).where(eq(id,video.id));
+        if(video_query.length > 0)
+            console.log("Grabbing from DB: manifest path:", video_query[0].manifest_path);
         const manifestPath = `/var/html/media/${id}.mpd`;
-        console.log("manifest path:", manifestPath);
+        console.log("ACTUAL manifest path:", manifestPath);
         console.log("EXISTS?", fs.existsSync(manifestPath));
         if(fs.existsSync(manifestPath)) 
             return res.sendFile(manifestPath);
@@ -184,11 +194,15 @@ router.get("/manifest/:id", (req: any, res: any) => {
 
 });
 
-router.get("/thumbnail/:id", (req: any, res: any) => {
+router.get("/thumbnail/:id", async (req: any, res: any) => {
     try {
         const id = req.params.id;
+        //perhaps switch to using the db then getting the path off of it?
+        const video_query = await db.select().from(video).where(eq(id,video.id));
+        if(video_query.length > 0)
+            console.log("Grabbing from DB: thumbnail path:", video_query[0].thumbnail_path);
         const thumbnailPath = `/var/html/media/${id}.jpg`;
-        console.log("thumbnail path:", thumbnailPath);
+        console.log("ACTUAL thumbnail path:", thumbnailPath);
         if(fs.existsSync(thumbnailPath))
             return res.sendFile(thumbnailPath);
         return res.status(200).json({status:"ERROR",error:true,message:"thumbnail not found. for /api/thumbnail/:id"});
