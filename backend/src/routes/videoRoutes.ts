@@ -149,6 +149,9 @@ router.post("/view", async (req: any, res: any) => {
                 video_id: id,
                 viewed: true,
             });
+            await db.update(video).set({
+                views: sql`${video.views} + 1` 
+            })
         }
         else
             viewed_before = true;

@@ -5,9 +5,29 @@ import axios from 'axios';
 //BONUS: Displaying the like and dislikes prior and post clicking
 const VideoPlayer = ({ vidData,visible }) => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [viewUpdated, setViewUpdated] = useState(false);
 
-    const handlePlayPause = () => {
+    const handleView = async() => {// probably do not have to update UI right away
+      try {
+        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/view", {id: vidData.id});
+        if (res.data.error)
+          console.log(res.data.message)
+        else
+          console.log("Watched before: ", res.data.viewed);
+
+      } catch(err) {
+        console.log("error in api call to /api/view at VideoPlayer.tsx: ", err);
+      } 
+    }
+
+    const handlePlayPause = () => { 
         setIsPlaying((prev) => !prev);
+
+        //Watched = click play button for the first time
+        if (!isPlaying && !vidData.watched && !viewUpdated) {
+          setViewUpdated(true);
+          handleView(); // probably do not have to wait
+        } 
     };
     
     const handleLike = async (value:boolean) => {
