@@ -43,7 +43,7 @@ const VideoPlayer = ({ vidData,visible }) => {
     }
 
     return (
-    <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-300 flex flex-col justify-center items-center gap-2.5 rounded-2xl" style={{display: (visible ? "flex" : "none") }}>
+    <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-200 flex flex-col justify-center items-center gap-2.5 rounded-2xl" style={{display: (visible ? "flex" : "none") }}>
         <h1 className='m-0'>{vidData.title}</h1>
         <ReactPlayer 
           playing={isPlaying}

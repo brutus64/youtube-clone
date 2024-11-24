@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
 import axios from "axios";
-import { PulseLoader } from "react-spinners";
+// import { PulseLoader } from "react-spinners";
 
 const PlayerList = () => {
     const { id } = useParams<{ id:string }>(); // ID of the first video
@@ -28,7 +28,7 @@ const PlayerList = () => {
 
     const fetchVideoId = async (num:number) => {  // Runs twice for some reason
         try {
-            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:num});
+            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{videoId:id,count:num});
             if (!res.data.error)
                 return res.data.videos;
             else
@@ -100,10 +100,10 @@ const PlayerList = () => {
             {moreVideos && videoref.current.vidList.map((vidData,i) => 
                 <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
             )}
-            {!moreVideos && 
+            {/* {!moreVideos && 
             <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-300 flex flex-col justify-center items-center gap-2.5 rounded-2xl">
                 <PulseLoader color="gray"/>
-            </div>}
+            </div>} */}
         </div>
     );
 };

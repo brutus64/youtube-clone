@@ -17,6 +17,10 @@ const Signup = () => {
         });
     }
     const submitSignup = (e: any) => {
+        if (!signupInputs.username || !signupInputs.password || !signupInputs.email) {
+            setBottomMsg("Please enter all fields");
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
         axios.post(`https://thewang.cse356.compas.cs.stonybrook.edu/api/adduser`,signupInputs)

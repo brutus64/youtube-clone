@@ -1,125 +1,198 @@
-import { Gorse } from "gorsejs";
 import { db } from "./drizzle/db";
-import { vid_like,video,view } from "./drizzle/schema";
+import { user,vid_like,video,view } from "./drizzle/schema";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
+import similarity from "compute-cosine-similarity";
 
-// const client = new Gorse({
-//     endpoint: "http://127.0.0.1:8088",
-//     secret:""
-// })
+interface UserMatrix {
+    [userId: number]: {
+        [videoId: string]: number;
+    };
+}
 
-// export function insertRating(uid: string, vid: string, type: string) {
-//     client.upsertFeedbacks([{
-//         FeedbackType: type,
-//         UserId: uid,
-//         ItemId: vid,
-//         Timestamp: new Date()
-//     }]); //upsert overwrites past feedback (desired)
-// }
-
-
-// export function deleteRating(uid: string, vid: string, type: string) {
-//     client.deleteFeedback({
-//         type: type,
-//         userId: uid,
-//         itemId: vid,
-//     });
-// }
-
-function shuffle(array) {
-    let currentIndex = array.length;
-  
-    // While there remain elements to shuffle...
-    while (currentIndex != 0) {
-  
-      // Pick a remaining element...
-      let randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-  
-      // And swap it with the current element.
-      [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex], array[currentIndex]];
+interface VideoMatrix {
+    [videoId: string]: {
+        [userId: number]: number;
     }
-  }
+}
 
-// return list of <num> video ids
-export async function recommend(uid: number, num: number) {
-    console.log("Getting recommendations...")
-    // const recommendation_ids = await client.getRecommend({
-    //     userId: uid.toString(),
-    //     cursorOptions: {n: num},
-    // });
-    const recommendation_ids = [];
-    // Response format:
-    // - id
-    // - description (video)
-    // - title (video)
-    // - watched (view)
-    // - liked (vid_like)
-    // - likevalues (video)
-    const recommendations:any = recommendation_ids.map(async id => {
-        const vidobj:any = await db.select({
-            id:video.id,
-            description:video.description,
-            title:video.title,
-            likevalues:video.like
-        }).from(video).where(eq(video.id,id));
-        vidobj.liked = null; //should be null, since recommendation system only uses new videos (user has not interacted)
-        vidobj.watched = false; //should be false, since recommendation system only used unwatched vids
+interface UserSimilarities {
+    user_id: number;
+    similar: number;
+}
+
+interface VideoSimilarities {
+    video_id: string;
+    similar: number;
+}
+
+export const userSimilarity = async (id:any, count:any) => {
+    //User query: get all users to then do cosine similiarity between them
+    const users = await db.select().from(user);
+
+    //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
+    const all_likes = await db.select().from(vid_like);
+
+    //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
+    const avoid_viewed_videos = await db.select().from(view).where(
+        and(
+            eq(view.user_id,id),
+            eq(view.viewed,true)
+        )
+    );
+
+    //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
+    const all_videos = await db.select().from(video).where(
+        eq(video.status,"complete")
+    );
+    // [
+    //     1: {video.id: -1,0,1},
+    //     2
+    // ]
+
+    // Create a matrix with Row: User, Column: Video ID, each cell is -1,0,1 for disliked, null, liked respectively
+    const user_matrix: UserMatrix = {};
+    users.forEach(u => {
+        user_matrix[u.id] = {};
+    });
+    
+    all_likes.forEach(like => {
+        if(like.liked === true)
+            user_matrix[like.user_id][like.video_id] = 1;
+        else if(like.liked === false)
+            user_matrix[like.user_id][like.video_id] = -1;
+        else //idk how this would happen since an entry is only added if u click like or dislike
+            user_matrix[like.user_id][like.video_id] = 0;
     })
 
-    //not enough recommendations: insert random unwatched videos
-    //does gorse already use as much videos as it can recommend (even bad recommendations)?
-    if (recommendations.length < num) { 
-        console.log("Not enough recommendations! Getting all unwatched videos...")
-        const uidViews:any = (await db.select({vid:view.video_id}).from(view).where(eq(view.user_id,uid))).map(v => v.vid);
-        const unwatched = await db.select({
-            id:video.id,
-            description:video.description,
-            title:video.title,
-            likevalues:video.like
-        }).from(video).where(and(notInArray(video.id,uidViews),eq(video.status,"complete")));
-        shuffle(unwatched);
-        const notReccAndUnwatched = unwatched.filter(vidobj => !recommendation_ids.includes(vidobj.id));
-        
-        for (let i = 0; i < notReccAndUnwatched.length; i++) {
-            const vidobj:any = notReccAndUnwatched[i];
-            vidobj.liked = null;
-            vidobj.watched = false;
-            recommendations.push(notReccAndUnwatched[i]);
-            if (recommendations.length == num)
+    all_videos.forEach(video => {
+        users.forEach(u => {
+            if (!(video.id in user_matrix[u.id])) //if video.id doesn't exist in user (it has not clicked like or dislike)
+                user_matrix[u.id][video.id] = 0;
+        });
+    });
+
+    // function getValue(d: { [key: string]: number }, i: number, j: number): number {
+    //     return Object.values(d)[i];
+    // }
+    
+
+    //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key user id
+    const similarities: UserSimilarities[] = [];
+    users.forEach(u => {
+        if(u.id !== id) {
+            const similar = similarity(
+                Object.values(user_matrix[id]),
+                Object.values(user_matrix[u.id]),
+            )
+            if(similar)
+                similarities.push({ user_id: u.id, similar});
+        }
+    })
+
+    //sort users by most similar user
+    similarities.sort((a,b) => b.similar - a.similar);
+
+    //1st Choice: Recommend other similar user's videos that hasn't been seen before
+    const rec_videos:string[] = [];
+    for (const similiar_users of similarities){
+        if(similiar_users.similar > 0.0) { //kinda similar
+            const liked_videos = all_likes.filter(like => like.user_id === similiar_users.user_id && like.liked === true);
+            for(const like_vid of liked_videos){
+                if(!avoid_viewed_videos.some(v => v.video_id === like_vid.video_id))//as long as its not on avoid_viewed_videos
+                    rec_videos.push(like_vid.video_id); //push video.id into it
+                if(rec_videos.length >= count) 
+                    break;
+            }
+            if(rec_videos.length >= count)
                 break;
         }
-
-        //no more unwatched videos: insert watched videos
-        if (recommendations.length < num) {
-            console.log("No more unwatched videos! Getting the rest of the database...")
-            const watched = await db.select({
-                id:video.id,
-                description:video.description,
-                title:video.title,
-                likevalues:video.like
-            }).from(video).where(and(eq(video.status,"complete"),inArray(video.id,uidViews))).limit(num-recommendations.length);
-            watched.forEach(async (vidobj:any) => {
-                vidobj.watched = true;
-                vidobj.liked = await db.select({liked:vid_like.liked}).from(vid_like).where(
-                    and(
-                        eq(vid_like.user_id,uid),
-                        eq(vid_like.video_id,vidobj.id),
-                        eq(video.status,"complete")
-                    )
-                )
-                recommendations.push(vidobj);
-            })
-            // recommendations.push.apply(recommendations,watched);
-        }
-
-        // if there are still less than <num> videos in recommendation
-        // array at this point, append videos already in the array
-        while (recommendations.length < num) {
-            let randInd = Math.floor(Math.random() * recommendations.length);
-            recommendations.push({...recommendations[randInd]});
-        } //this will infinite loop if there are zero videos in the system
     }
-    return recommendations;
+
+    //2nd Choice: Recommend random unseen videos
+    if(rec_videos.length < count) {
+        const unwatched_videos = all_videos.filter(v => !avoid_viewed_videos.some(view => view.video_id === v.id)); //as long as the video is not a video that's viewed already
+        while(rec_videos.length < count && unwatched_videos.length > 0) {
+            const rand_ind = Math.floor(Math.random()*unwatched_videos.length);
+            rec_videos.push(unwatched_videos[rand_ind].id);
+            unwatched_videos.splice(rand_ind,1); //delete 1 element starting at that index
+        }
+    }
+
+    //3rd Choice: (Final fallback) Recommend random seen videos
+    if(rec_videos.length < count) {
+        const leftover_vid = all_videos.filter(v => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
+        while(rec_videos.length < count && leftover_vid.length > 0){
+            const rand_ind = Math.floor(Math.random()*leftover_vid.length);
+            rec_videos.push(leftover_vid[rand_ind].id);
+            leftover_vid.splice(rand_ind,1);
+        }
+    }
+
+    return rec_videos;
+}
+
+export const videoSimilarity = async (id:any, count:any) => {
+    //User query: get all users
+    const users = await db.select().from(user);
+
+    //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
+    const all_likes = await db.select().from(vid_like);
+
+    //Don't care about view query here!
+
+    //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
+    const all_videos = await db.select().from(video).where(
+        eq(video.status,"complete")
+    );
+    // [
+    //     1: {video.id: -1,0,1},
+    //     2
+    // ]
+
+    // Create a matrix with Row: Video ID, Column: User, each cell is -1,0,1 for disliked, null, liked respectively
+    const video_matrix: VideoMatrix = {};
+    all_videos.forEach(v => {
+        video_matrix[v.id] = {};
+    });
+    
+    all_likes.forEach(like => {
+        if(like.liked === true)
+            video_matrix[like.video_id][like.user_id] = 1;
+        else if(like.liked === false)
+            video_matrix[like.video_id][like.user_id] = -1;
+        else //idk how this would happen since an entry is only added if u click like or dislike
+            video_matrix[like.video_id][like.user_id] = 0;
+    })
+
+    all_videos.forEach(video => {
+        users.forEach(u => {
+            if (!(u.id in video_matrix[video.id])) //if user.id doesn't exist in video (it has not clicked like or dislike)
+                video_matrix[video.id][u.id] = 0;
+        });
+    });    
+
+    //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key video id
+    const similarities: VideoSimilarities[] = [];
+    all_videos.forEach(v => {
+        if(v.id !== id) {
+            const similar = similarity(
+                Object.values(video_matrix[id]),
+                Object.values(video_matrix[v.id]),
+            )
+            if(similar)
+                similarities.push({ video_id: v.id, similar});
+        }
+    })
+
+    //sort videos by most similar video
+    similarities.sort((a,b) => b.similar - a.similar);
+
+    //Extract ID
+    const rec_videos:string[] = [];
+    for (const similar_videos of similarities){
+        rec_videos.push(similar_videos.video_id);
+        if (rec_videos.length >= count)
+            break;
+    }
+    return rec_videos;
 }

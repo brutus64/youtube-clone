@@ -85,7 +85,7 @@ router.post("/login", async (req: any, res: any) => {
         )
         
         if(user_query.length == 0)
-            return res.status(200).json({status:"ERROR",error:true,message:"log in request failed, either wrong info or disabled account or non-existent"})
+            return res.status(200).json({status:"ERROR",error:true,message:"Username/Password incorrect"})
         console.log(user_query[0]);
         //Set user session to store the user.id and username
         req.session.user = { id: user_query[0].id, username: user_query[0].username };
