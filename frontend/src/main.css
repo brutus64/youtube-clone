@@ -4,12 +4,12 @@
 
 @layer components {
     body {
-        @apply m-0 bg-slate-200 font-fantasy;
+        @apply m-0 bg-slate-100 font-fantasy;
     }
     input {
         @apply flex-1 h-8 w-96 text-lg px-1;
     }
     button {
-        @apply h-10 cursor-pointer bg-blue-600 text-white border-none rounded-md px-10 py-1;
+        @apply h-10 cursor-pointer bg-blue-500 text-white border-none rounded-md px-10 py-1;
     }
 }

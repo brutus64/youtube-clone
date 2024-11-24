@@ -36,8 +36,8 @@ const Signup = () => {
         
     }
     return (
-        <div id="signup-form">
-            <form className='flex flex-col gap-3 items-center mt-12'>
+        <div id="signup-form" className='flex flex-row justify-center'>
+            <form className='flex flex-col gap-3 items-center mt-12 p-6 bg-slate-200 rounded-xl'>
                 <div>
                     <label htmlFor="username"><h1 className='mb-5 text-xl'>Username</h1></label>
                     <input 

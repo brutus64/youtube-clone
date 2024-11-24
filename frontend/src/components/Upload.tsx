@@ -36,43 +36,52 @@ const Upload = () => {
     }
     return(
         <>
-            <form onSubmit={handleUpload} className='flex flex-col gap-3 items-center mt-12'>
-                <div>
-                    <label htmlFor="title">Title</label>
-                    <input 
-                        type="text" 
-                        id="upload-title"
-                        name="title"
-                        onChange={(e)=>setTitle(e.target.value)}
-                        value={title}
-                        required
-                    />
-                    <label htmlFor="author">Author</label>
-                    <input 
-                        type="text"
-                        id="upload-author"
-                        name="author"
-                        onChange={(e)=>setAuthor(e.target.value)}
-                        value={author}
-                    />
-                    <label htmlFor="description">Description</label>
-                    <input 
-                        type="text"
-                        id="upload-description"
-                        name="description"
-                        onChange={(e)=>setDescription(e.target.value)}
-                        value={description}
-                    />
-                    <label htmlFor="mp4File">Mp4 File</label>
-                    <input 
-                        type="file" 
-                        id="mp4File"
-                        name="mp4File"
-                        accept="video/mp4"
-                        onChange={handleFileChange}
-                    />
+            <form onSubmit={handleUpload} className='flex flex-row justify-center'>
+                <div className='flex flex-col gap-3 items-center mt-12 p-6 bg-slate-200 rounded-xl'>
+                    <div>
+                        <label htmlFor="title"><h1>Title</h1></label>
+                        <input 
+                            type="text" 
+                            id="upload-title"
+                            name="title"
+                            onChange={(e)=>setTitle(e.target.value)}
+                            value={title}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="author"><h1>Author</h1></label>
+                        <input 
+                            type="text"
+                            id="upload-author"
+                            name="author"
+                            onChange={(e)=>setAuthor(e.target.value)}
+                            value={author}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="description"><h1>Description</h1></label>
+                        <input 
+                            type="text"
+                            id="upload-description"
+                            name="description"
+                            onChange={(e)=>setDescription(e.target.value)}
+                            value={description}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="mp4File"><h1>Mp4 File</h1></label>
+                        <input 
+                            type="file" 
+                            id="mp4File"
+                            name="mp4File"
+                            accept="video/mp4"
+                            onChange={handleFileChange}
+                            className='text-sm'
+                        />
+                    </div>
+                    <button type="submit" className="hover:opacity-90 active:opacity-90">Upload</button>
                 </div>
-                <button type="submit">Upload</button>
             </form>
             {errMsg && <div>{errMsg}</div>}
             {resMsg && <div>{resMsg}</div>}

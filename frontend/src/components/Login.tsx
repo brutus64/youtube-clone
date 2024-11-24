@@ -41,8 +41,8 @@ const Login = () => {
         
     }
     return (
-        <div id="login-form">
-            <form onSubmit={submitLogin} className='flex flex-col gap-3 items-center mt-12'>
+        <div id="login-form" className='flex flex-row justify-center'>
+            <form onSubmit={submitLogin} className='flex flex-col gap-3 items-center mt-12 p-6 bg-slate-200 rounded-xl'>
                 <div>
                     <label htmlFor="username"><h1 className='mb-5 text-xl'>Username</h1></label>
                     <input 
