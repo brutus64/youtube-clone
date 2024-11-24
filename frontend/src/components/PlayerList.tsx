@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
 import axios from "axios";
+import { PulseLoader } from "react-spinners";
 
 const PlayerList = () => {
     const { id } = useParams<{ id:string }>(); // ID of the first video
@@ -99,6 +100,10 @@ const PlayerList = () => {
             {moreVideos && videoref.current.vidList.map((vidData,i) => 
                 <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
             )}
+            {!moreVideos && 
+            <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-300 flex flex-col justify-center items-center gap-2.5 rounded-2xl">
+                <PulseLoader color="gray"/>
+            </div>}
         </div>
     );
 };

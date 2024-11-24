@@ -8,7 +8,7 @@ export default {
         'dislike': "url('/dislike.svg')",
       },
       gridTemplateColumns: {
-        'auto-fit-400': 'repeat(auto-fit, minmax(400px, 1fr))',
+        'auto-fit-320': 'repeat(auto-fit, minmax(320px, 1fr))',
       },
       flex: {
         '2': '2 2 0%'
