@@ -20,10 +20,10 @@ router.post("/videos", async (req:any , res:any) => {
         let rec_videos:any;
 
         if (videoId) { // video similarity algorithm
-            rec_videos = videoSimilarity(videoId,count);
+            rec_videos = await videoSimilarity(videoId,req.user_id,count);
         }
         else { // user similarity algorithm
-            rec_videos = userSimilarity(req.user_id,count);
+            rec_videos = await userSimilarity(req.user_id,count);
         }
 
         //Obtain data from recommended video id in the form of [{id,desc,title,watched,liked,# likes}]

@@ -74,6 +74,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    deploy:
+      replicas: 3
+      endpoint_mode: dnsrr
 
   frontend:
     build:
@@ -85,14 +88,6 @@ services:
     #   - ./frontend:/app
     # ports:
     #   - "5173:5173"
-    network_mode: host
-  recommendation:
-    build:
-      context: ./flask
-      dockerfile: Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
     network_mode: host
 
   nginx:

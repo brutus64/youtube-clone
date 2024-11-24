@@ -131,19 +131,26 @@ export const userSimilarity = async (id:any, count:any) => {
     return rec_videos;
 }
 
-export const videoSimilarity = async (id:any, count:any) => {
+export const videoSimilarity = async (id:any, uid:any, count:any) => {
     //User query: get all users
     const users = await db.select().from(user);
 
     //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
     const all_likes = await db.select().from(vid_like);
 
-    //Don't care about view query here!
+    //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
+    const avoid_viewed_videos = await db.select().from(view).where(
+        and(
+            eq(view.user_id,uid),
+            eq(view.viewed,true)
+        )
+    );
 
     //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
-    const all_videos = await db.select().from(video).where(
-        eq(video.status,"complete")
-    );
+    const all_videos = await db.select().from(video)
+    // .where(
+    //     eq(video.status,"complete")
+    // );
     // [
     //     1: {video.id: -1,0,1},
     //     2
@@ -186,13 +193,26 @@ export const videoSimilarity = async (id:any, count:any) => {
 
     //sort videos by most similar video
     similarities.sort((a,b) => b.similar - a.similar);
-
-    //Extract ID
+    
+    //1st Choice: Recommend videos that hasn't been seen before (all videos from most similar to least similar)
     const rec_videos:string[] = [];
-    for (const similar_videos of similarities){
-        rec_videos.push(similar_videos.video_id);
+    for (const similar_video of similarities){
+        if (!avoid_viewed_videos.some(v => v.video_id === similar_video.video_id))//as long as its not on avoid_viewed_videos
+            rec_videos.push(similar_video.video_id);
         if (rec_videos.length >= count)
             break;
     }
+
+    //2nd Choice: Recommend random seen videos
+    if(rec_videos.length < count) {
+        const leftover_vid = all_videos.filter(v => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
+        while(rec_videos.length < count && leftover_vid.length > 0){
+            const rand_ind = Math.floor(Math.random()*leftover_vid.length);
+            rec_videos.push(leftover_vid[rand_ind].id);
+            leftover_vid.splice(rand_ind,1);
+        }
+    }
     return rec_videos;
 }
+
+// USE HASHSETS LOLOLOLOLOL
