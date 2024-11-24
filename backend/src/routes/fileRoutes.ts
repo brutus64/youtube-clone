@@ -211,4 +211,39 @@ router.get("/thumbnail/:id", async (req: any, res: any) => {
     }
 });
 
+// Return video information for display (Not a requirement)
+router.get("/video/:id", async (req:any, res:any) => {
+    try {
+        const id = req.params.id;
+        const video_data = await db.select().from(video).where(eq(id,video.id));
+        if(video_data.length > 0) {
+            console.log("Data for video id ", id, " found");
+            const user_liked = await db.select().from(vid_like).where(
+                and(
+                    eq(vid_like.video_id,id),
+                    eq(vid_like.user_id,req.user_id)
+                ));
+            const viewed = await db.select().from(view).where(
+                and(
+                    eq(view.video_id,id),
+                    eq(view.user_id,req.user_id)
+                )
+            );
+            const details = {
+                id: id,
+                description: video_data[0].description,
+                title: video_data[0].title,
+                watched: viewed.length > 0,
+                liked: (user_liked.length > 0) ? user_liked[0].liked : null ,
+                likevalues: video_data[0].like,
+            }
+            return res.status(200).json({status:"OK",vdata:details});
+        }
+        
+        return res.status(200).json({status:"ERROR",error:true,message:"video id not found. for /api/video/:id"});
+    } catch(err) {
+        return res.status(200).json({status:"ERROR",error:true,message:"internal server error from api/video/:id"});
+    }
+});
+
 export default router;

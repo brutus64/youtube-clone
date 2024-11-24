@@ -53,14 +53,14 @@ const VideoPlayer = ({ vidData,visible }) => {
         <div className="flex items-center justify-center gap-24 flex-1 self-stretch">
           <div className="flex items-center gap-1 justify-between text-2xl rounded-3xl p-2 w-48">
             <div className="flex font-sans gap-2 items-center border-r-solid border-r-1 border-r-gray flex-2">
-              <button name="like" className='bg-like m-0 p-0 size-16' onClick={()=>handleLike(true)}></button>
+              <button name="like" className='bg-like m-0 p-0 size-16 bg-transparent' onClick={()=>handleLike(true)}></button>
               {vidData.likevalues}
             </div>
             
-            <button name="dislike" className='bg-dislike m-0 p-0 size-16' onClick={()=>handleLike(false)}></button>
+            <button name="dislike" className='bg-dislike m-0 p-0 size-16 bg-transparent' onClick={()=>handleLike(false)}></button>
           </div>
           <div id={visible ? "playPauseBtn" : "notPlayPauseBtn"} onClick={handlePlayPause}>
-            <button className='w-52'>{isPlaying ? "Pause" : "Play"}</button>
+            <button className='w-52 hover:opacity-90 active:opacity-90'>{isPlaying ? "Pause" : "Play"}</button>
           </div>
         </div>
         
