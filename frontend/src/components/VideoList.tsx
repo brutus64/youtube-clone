@@ -13,7 +13,7 @@ const VideoList = () => {
         const fetchVideoIds = async () => {
             console.log("Fetching videos...")
             try{
-                const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:NUM_VIDEOS});
+                const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:NUM_VIDEOS});
                 console.log(res.data);
                 //for each object we just want id, other info kind of useless unless we need description and video titles I guess.
                 const ids = res.data.videos.map(value => value.id);

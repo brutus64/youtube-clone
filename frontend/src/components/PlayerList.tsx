@@ -11,7 +11,7 @@ const PlayerList = () => {
 
     const fetchFirst = async () => {
         try {
-            const res = await axios.get(`http://thewang.cse356.compas.cs.stonybrook.edu/api/video/${id}`);
+            const res = await axios.get(`https://thewang.cse356.compas.cs.stonybrook.edu/api/video/${id}`);
             if (!res.data.error) {
                 console.log("First video retrieved");
                 return res.data.vdata;
@@ -27,7 +27,7 @@ const PlayerList = () => {
 
     const fetchVideoId = async (num:number) => {  // Runs twice for some reason
         try {
-            const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:num});
+            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{count:num});
             if (!res.data.error)
                 return res.data.videos;
             else
