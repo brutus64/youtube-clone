@@ -122,6 +122,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         const [video_id] = await db.insert(video).values({
             id: `v${fileName}`,
             title: title, 
+            description: description,
             status: 'processing',
             uploaded_by: req.user_id,
             manifest_path: '',
