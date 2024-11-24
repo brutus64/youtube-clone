@@ -19,7 +19,7 @@ const Signup = () => {
     const submitSignup = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
-        axios.post(`http://thewang.cse356.compas.cs.stonybrook.edu/api/adduser`,signupInputs)
+        axios.post(`https://thewang.cse356.compas.cs.stonybrook.edu/api/adduser`,signupInputs)
             .then((res: any) => {
                 console.log(res)
                 console.log("Response: " + res.data.message);

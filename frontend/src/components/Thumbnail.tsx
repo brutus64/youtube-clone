@@ -37,7 +37,7 @@ const Thumbnail = ({vid}) => {
     return (
         <div className="p-1 m-4 w-96 h-52 box-border border-solid border-2 border-black bg-slate-500" onClick={()=>navigate(`/play/${vid}`)}>
             {/* its a Data URL so it decodes base64 string to render the image, image is able to recognize its a Data URL by the serquence of bytes as it says <mediatype>[base64] like data:image/png;base64,(encoded stuff) to be decoded*/}
-            <img src={`http://thewang.cse356.compas.cs.stonybrook.edu/api/thumbnail/${vid}`} alt="thumbnail image" />
+            <img src={`https://thewang.cse356.compas.cs.stonybrook.edu/api/thumbnail/${vid}`} alt="thumbnail image" />
         </div>
     )
 }

@@ -9,7 +9,7 @@ const VideoPlayer = ({ vidData,visible }) => {
 
     const handleView = async() => {// probably do not have to update UI right away
       try {
-        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/view", {id: vidData.id});
+        const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/view", {id: vidData.id});
         if (res.data.error)
           console.log(res.data.message)
         else
@@ -34,7 +34,7 @@ const VideoPlayer = ({ vidData,visible }) => {
       try {
         //I believe the manifest here is actually the id
         //Reasoning: AppRoutes.tsx
-        const res = await axios.post("http://thewang.cse356.compas.cs.stonybrook.edu/api/like", {id: vidData.id,value: value});
+        const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/like", {id: vidData.id,value: value});
         if(res.data)
           console.log("res.data should be number of likes now: ", res.data);
       } catch(err) {

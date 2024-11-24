@@ -23,7 +23,7 @@ const Login = () => {
         e.stopPropagation();
         
         try {
-            const res = await axios.post(`http://thewang.cse356.compas.cs.stonybrook.edu/api/login`,loginInputs, {withCredentials: true})
+            const res = await axios.post(`https://thewang.cse356.compas.cs.stonybrook.edu/api/login`,loginInputs, {withCredentials: true})
             console.log(res)
             console.log("Response: " + res.data.message);
             if (res.data.error)

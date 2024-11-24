@@ -97,10 +97,14 @@ services:
 
   nginx:
     image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - /root/youtube-clone/media:/var/html/media
       - /root/youtube-clone/dash-script:/root/youtube-media/dash-script
+      - /etc/letsencrypt:/etc/letsencrypt
     network_mode: host
     depends_on:
       - frontend
