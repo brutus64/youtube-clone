@@ -104,7 +104,7 @@ router.post("/like", async (req: any, res: any) => {
 router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
     try{
         console.log("ACCEPTING REQUEST TO /api/upload");
-        const { author, title } = req.body;
+        const { author, title, description } = req.body;
         const file = req.file;
         const user_id = req.user_id;
 
@@ -122,6 +122,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         const [video_id] = await db.insert(video).values({
             id: `v${fileName}`,
             title: title, 
+            description: description,
             status: 'processing',
             uploaded_by: req.user_id,
             manifest_path: '',

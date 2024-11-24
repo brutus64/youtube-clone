@@ -3,6 +3,7 @@ import axios from "axios";
 const Upload = () => {
     const [title, setTitle] = useState<string>("");
     const [author, setAuthor] = useState<string>("");
+    const [description, setDescription] = useState<string>(""); // optional
     const [mp4File, setMp4File] = useState<File | null>(null);
     const [errMsg, setErrMsg] = useState<string | null>(null);
     const [resMsg, setResMsg] = useState<string | null>(null);
@@ -19,6 +20,7 @@ const Upload = () => {
         const formData = new FormData();
         formData.append('title',title);
         formData.append('author',author);
+        formData.append('description',description);
         formData.append('mp4File',mp4File);
         const config = {
             headers: {
@@ -52,6 +54,14 @@ const Upload = () => {
                         name="author"
                         onChange={(e)=>setAuthor(e.target.value)}
                         value={author}
+                    />
+                    <label htmlFor="description">Description</label>
+                    <input 
+                        type="text"
+                        id="upload-description"
+                        name="description"
+                        onChange={(e)=>setDescription(e.target.value)}
+                        value={description}
                     />
                     <label htmlFor="mp4File">Mp4 File</label>
                     <input 
