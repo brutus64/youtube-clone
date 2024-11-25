@@ -65,7 +65,7 @@ services:
     # volumes:
     #   - ./backend:/app #bind mounting
     # ports:
-    #   - "5000:5000"
+    #   - "5000-5002:5000"
     env_file:
       - ./backend/.env
     environment:

@@ -10,7 +10,11 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "migration": "tsx src/db/migrate.ts",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "prebuild": "cp drizzle.config.ts src/",
+    "postbuild": "rm src/drizzle.config.ts",
+    "build": "npm run prebuild && tsc && npm run postbuild",
+    "prod": "NODE_ENV=production node dist/src/index.js"
   },
   "keywords": [],
   "author": "",

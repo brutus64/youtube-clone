@@ -8,11 +8,14 @@ if (!url) {
     throw new Error("Database URL was not set");
 }
 
-// make sure to comment out migration after every migration
+
 // const migrationClient = postgres(url); //typescript now confirms that it is not undefined after if check
-// migrate(drizzle(migrationClient), {
-//     "migrationsFolder": "./src/drizzle/migrations"
-// });
+// make sure to comment out migration after every migration
+// async function runMigrations() {
+//     migrate(drizzle(migrationClient), {
+//         "migrationsFolder": "./src/drizzle/migrations"
+//     });
+// }
 
 const queryClient = postgres(url);
 

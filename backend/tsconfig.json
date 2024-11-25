@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // "outDir": "./dist",
+    // "rootDir": "./src",
     /* Language and Environment */
     "target": "ESNext",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     /* Modules */
@@ -15,6 +17,6 @@
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
     "types": ["node"]
   },
-  "include": ["./src/**/*.ts", "*.ts"],
+  "include": ["./src/**/*.ts", "./*.ts", "./drizzle.config.ts"],
   "exclude": ["node_modules"]
 }

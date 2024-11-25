@@ -13,8 +13,16 @@ import { redisConfig } from "../configs/redisConfig";
 
 const router = Router();
 
+const storage = multer.diskStorage({
+    destination: '/var/html/media',
+    filename: function (req:any, file:any, cb:any) {
+        cb(null, file.originalname);
+    }
+})
+
 //Ideal to actually insert the video into filesystem rather than send it to memory, disk is faster than network transfer in the case of the server we're running
-const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
+// const upload = multer({ dest: '/var/html/media', limits: { fileSize: 900 * 1024 * 1024}})
+const upload = multer({storage: storage});
 
 //The option to use in memory storage for uploading video files.
 // const storage = multer.memoryStorage();
@@ -113,15 +121,15 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             return res.status(200).json({ status: "ERROR", error: true, message: "No file uploaded at /api/upload" });
         
         //rename the uploaded file to have ".mp4" as multer does not handle extensions when uploading.
-        const originalPath = file.path;
-        const newPath = originalPath + '.mp4';
-        fs.renameSync(originalPath, newPath);
+        // const originalPath = file.path;
+        // const newPath = originalPath + '.mp4';
+        // fs.renameSync(originalPath, newPath);
         const fileName = file.filename;
-
+        console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
         const [video_id] = await db.insert(video).values({
-            id: `v${fileName}`,
-            title: title, 
+            id: `v${fileName.replace(".mp4","")}`,
+            title: title,
             description: description,
             status: 'processing',
             uploaded_by: req.user_id,
@@ -130,7 +138,8 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         }).returning( { id: video.id });
 
         const videoId = video_id.id;
-        const filename_path = file.filename + '.mp4';
+        res.status(200).json({status: "OK", id: videoId});
+        const filename_path = file.filename;
 
         console.log("filename_path in /api/upload:", filename_path);
 
@@ -145,7 +154,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
 
         //return the video ID
         console.log("VIDEOID upload:",videoId);
-        return res.status(200).json({status: "OK", id: videoId});
+        // return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
     }
@@ -247,7 +256,15 @@ const worker = new Worker('uploadQueue', async job => {
     });
 
     //Workers run in the backend and execute the jobs, the jobs are in a queue stored in redis, workers puts a mutex lock on the job when working and has to update statuses in Redis durign it's work process through it.
-}, {connection: redisConfig, concurrency: 1})
+// }, {connection: redisConfig, concurrency: 1})
+}, {
+    connection: redisConfig,
+    concurrency: 2, 
+    limiter: {
+        max: 5,
+        duration: 1000
+    }
+});
 
 
 //Worker progress report prints:
