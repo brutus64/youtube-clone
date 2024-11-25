@@ -41,7 +41,8 @@ export const userSimilarity = async (id:any, count:any) => {
     );
 
     //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
-    const all_videos = await db.select().from(video).where(
+    const all_videos = await db.select().from(video)
+    .where(
         eq(video.status,"complete")
     );
     // [
@@ -74,12 +75,16 @@ export const userSimilarity = async (id:any, count:any) => {
     // function getValue(d: { [key: string]: number }, i: number, j: number): number {
     //     return Object.values(d)[i];
     // }
-    
+    // console.log("TYPE: ",typeof user_matrix[0]);
+    // console.log("CUR USER LENGTH: ",Object.values(user_matrix[id]).length);
+
+
 
     //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key user id
     const similarities: UserSimilarities[] = [];
     users.forEach(u => {
         if(u.id !== id) {
+            // console.log("LENGTH: ",Object.values(user_matrix[u.id]).length);
             const similar = similarity(
                 Object.values(user_matrix[id]),
                 Object.values(user_matrix[u.id]),

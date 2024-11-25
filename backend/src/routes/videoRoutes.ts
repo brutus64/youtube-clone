@@ -157,6 +157,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         console.log("VIDEOID upload:",vid_id);
         // return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
+        console.log(err);
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
     }
 });

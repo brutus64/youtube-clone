@@ -66,8 +66,8 @@ router.post("/videos", async (req:any , res:any) => {
         //any vid_like.user_id,vid_like.video_id combo that doesn't exist in vid_like we can assume the user has never clicked on like or dislike so its null
         //any view.user_id, view.video_id combo that doesn't exist in view, we can assume the user has never watched it before
         res.status(200).json({status:"OK", videos: details});
-    }catch(err){
-        return res.status(200).json({status:"ERROR", error:true, message:"internal server error in /api/videos:", err})
+    }catch(err:any){
+        return res.status(200).json({status:"ERROR", error:true, message:`internal server error in /api/videos: ${err.message}`})
     }
 })
 

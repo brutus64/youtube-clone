@@ -77,6 +77,10 @@ services:
     deploy:
       replicas: 3
       endpoint_mode: dnsrr
+      resources:
+        limits:
+          cpus: '2.25'  # Limit to 1 CPU core
+          memory: 4.5g   # Limit to 2GB of memory
 
   frontend:
     build:
