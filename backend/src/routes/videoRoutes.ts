@@ -127,18 +127,19 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         const fileName = file.filename;
         console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
-        const [video_id] = await db.insert(video).values({
-            id: `v${fileName.replace(".mp4","")}`,
+        const vid_id = `v${fileName.replace(".mp4","")}`;
+
+        res.status(200).json({status: "OK", id: vid_id});
+        //Inserts into Video Table, the metadata for the video
+        await db.insert(video).values({
+            id: vid_id,
             title: title,
             description: description,
             status: 'processing',
             uploaded_by: req.user_id,
             manifest_path: '',
             thumbnail_path: '',
-        }).returning( { id: video.id });
-
-        const videoId = video_id.id;
-        res.status(200).json({status: "OK", id: videoId});
+        });
         const filename_path = file.filename;
 
         console.log("filename_path in /api/upload:", filename_path);
@@ -147,13 +148,13 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         await uploadQueue.add('process-upload', {
             // fileBuffer: file.buffer,
             filename_path,
-            videoId,
+            vid_id,
             userId: user_id,
             title
         });
 
         //return the video ID
-        console.log("VIDEOID upload:",videoId);
+        console.log("VIDEOID upload:",vid_id);
         // return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
         return res.status(200).json({ status:"ERROR", error:true, message: "internal server error in /api/upload"});
