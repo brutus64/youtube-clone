@@ -19,50 +19,54 @@ router.post("/videos", async (req:any , res:any) => {
         const { videoId, count } = req.body;
         let rec_videos:any;
 
+        // we should query database here, so we can reuse the data below
+        const users = await db.select().from(user);
+        const all_likes = await db.select().from(vid_like);
+        const avoid_viewed_query = await db.select({video_id:view.video_id}).from(view).where(
+            and(
+                eq(view.user_id,uid),
+                eq(view.viewed,true)
+            )
+        );
+        const avoid_viewed_videos = new Set(avoid_viewed_query.map(view => view.video_id));
+        const all_videos = await db.select({ //query subset of columns for slightly better performance
+            id:video.id,
+            description:video.description,
+            title:video.title,
+            like:video.like,
+        }).from(video);
+    
         if (videoId) { // video similarity algorithm
-            rec_videos = await videoSimilarity(videoId,req.user_id,count);
+            rec_videos = await videoSimilarity(videoId,req.user_id,count,users,all_likes,avoid_viewed_videos,all_videos);
         }
         else { // user similarity algorithm
-            rec_videos = await userSimilarity(req.user_id,count);
+            rec_videos = await userSimilarity(req.user_id,count,users,all_likes,avoid_viewed_videos,all_videos);
         }
 
-        //Obtain data from recommended video id in the form of [{id,desc,title,watched,liked,# likes}]
-        const details = await Promise.all(
-            rec_videos.map(async (rec_vid_id: string) => {
-                const video_data = await db.select().from(video).where(eq(video.id,rec_vid_id)); //get the video data
-                const user_liked = await db.select().from(vid_like).where(
-                    and(
-                        eq(vid_like.video_id,rec_vid_id),
-                        eq(vid_like.user_id,req.user_id)
-                    ));
-                const viewed = await db.select().from(view).where(
-                    and(
-                        eq(view.video_id, rec_vid_id),
-                        eq(view.user_id, req.user_id)
-                    )
-                );
-                let watch = true;
-                if(viewed.length === 0) {
-                    watch = false;
-                }
-                else{
-                    if(viewed[0].viewed === false)
-                        watch = viewed[0].viewed;
-                }
-                let liked = null;
-                if(user_liked.length > 0){
-                    liked = user_liked[0].liked
-                }
-                return {
-                    id: rec_vid_id,
-                    description: video_data[0].description,
-                    title: video_data[0].title,
-                    watched: watch,
-                    liked: liked,
-                    likevalues: video_data[0].like,
-                };
-            })
-        )
+        // create a hashmap mapping all video ids liked/disliked by the user to the like value
+        const user_liked_map = new Map();
+        for (const likeobj of all_likes.filter(like => like.user_id === req.user_id))
+            user_liked_map.set(likeobj.video_id,likeobj.liked);
+
+        // create a hashmap mapping all video ids to video data
+        const id_to_data = new Map();
+        for (const vid in all_videos)
+            id_to_data.set(vid.id,vid);
+
+        const details = rec_videos.map(rec_vid_id => {
+            const video_data = id_to_data.get(rec_vid_id);//const video_data = await db.select().from(video).where(eq(video.id,rec_vid_id)); //get the video data
+            const user_liked = (user_liked_map.has(rec_vid_id)) ? user_liked_map.get(rec_vid_id) : null;
+            const viewed = avoid_viewed_videos.has(rec_vid_id);
+            return {
+                id: rec_vid_id,
+                description: video_data.description,
+                title: video_data.title,
+                watched: viewed,
+                liked: user_liked,
+                likevalues: video_data.like,
+            };
+        })
+        
         //any vid_like.user_id,vid_like.video_id combo that doesn't exist in vid_like we can assume the user has never clicked on like or dislike so its null
         //any view.user_id, view.video_id combo that doesn't exist in view, we can assume the user has never watched it before
         res.status(200).json({status:"OK", videos: details});
