@@ -18,5 +18,5 @@ if (!url) {
 // }
 
 const queryClient = postgres(url);
-
-export const db = drizzle(queryClient, {schema, logger: true});
+export const db = drizzle(queryClient);
+// export const db = drizzle(queryClient, {schema, logger: true});

@@ -1,7 +1,7 @@
-import { db } from '../drizzle/db';
-import { user, video } from '../drizzle/schema'
+import { db } from '../drizzle/db.js';
+import { user, video } from '../drizzle/schema.js'
 import fs from 'fs';
-import runMigrations from './migration';
+import runMigrations from './migration.js';
 const mediaPath = "/var/html/media"
 
 async function initUser(){

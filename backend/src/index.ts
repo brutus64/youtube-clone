@@ -94,7 +94,7 @@ async function tryListen(portNum:number) {
     await initDB();
   })
   .on('error', (err:any) => {
-    if (err.code === 'EADDRINUSE' && portNum < 5005) {
+    if (err.code === 'EADDRINUSE' && portNum < 5010) {
       console.log(`Port ${portNum} is in use, trying another...`);
       tryListen(portNum + 1);
     } else {

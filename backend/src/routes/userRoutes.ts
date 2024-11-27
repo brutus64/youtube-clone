@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { db } from '../drizzle/db';
-import { user } from '../drizzle/schema';
+import { authMiddlware } from '../middleware/auth.js';
+import { user } from '../drizzle/schema.js';
+import { db } from '../drizzle/db.js';
+
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
-import { sendEmail } from '../email';
-import { authMiddlware } from '../middleware/auth';
+import { sendEmail } from '../email.js';
+
 const router = Router();
 
 //ROUTES
@@ -97,7 +99,7 @@ router.post("/login", async (req: any, res: any) => {
 
 router.post("/check-auth", (req:any, res:any) => {
     try{
-        console.log("req from /api/check-auth:", req.session.user);
+        // console.log("req from /api/check-auth:", req.session.user);
         if(req.session && req.session.user) {
           console.log("userId returned:", req.session.user.id);
           return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user.id});

@@ -1,15 +1,15 @@
 import { Router } from "express";
-import { authMiddlware } from "../middleware/auth";
-import { db } from "../drizzle/db";
-import { video, view, vid_like } from "../drizzle/schema";
+import { authMiddlware } from "../middleware/auth.js";
+import { db } from "../drizzle/db.js";
+import { video, view, vid_like } from "../drizzle/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { exec } from "child_process";
-import { uploadQueue } from "../redis/uploadQueue";
+import { uploadQueue } from "../redis/uploadQueue.js";
 import { Worker } from "bullmq";
-import { redisConfig } from "../configs/redisConfig";
+import { redisConfig } from "../configs/redisConfig.js";
 
 const router = Router();
 
@@ -45,7 +45,7 @@ router.post("/like", async (req: any, res: any) => {
         //Check if Video has been interacted before with Like or Dislike Button
         const like_query = await db.select().from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
         const db_like_status = like_query[0]?.liked;
-        console.log("db_like_status: "+db_like_status);
+        // console.log("db_like_status: "+db_like_status);
 
         //Never interacted before, add entry
         if(like_query.length === 0){
@@ -111,7 +111,7 @@ router.post("/like", async (req: any, res: any) => {
 //multer handling mp4File will upload to "/var/html/media"
 router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
     try{
-        console.log("ACCEPTING REQUEST TO /api/upload");
+        // console.log("ACCEPTING REQUEST TO /api/upload");
         const { author, title, description } = req.body;
         const file = req.file;
         const user_id = req.user_id;
@@ -125,7 +125,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         // const newPath = originalPath + '.mp4';
         // fs.renameSync(originalPath, newPath);
         const fileName = file.filename;
-        console.log("filename with diskstorage", fileName);
+        // console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
         const vid_id = `v${fileName.replace(".mp4","")}`;
 
@@ -142,7 +142,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         });
         const filename_path = file.filename;
 
-        console.log("filename_path in /api/upload:", filename_path);
+        // console.log("filename_path in /api/upload:", filename_path);
 
         //Adds the job to the Queue (BullMQ) to be done by a Worker
         await uploadQueue.add('process-upload', {
@@ -154,7 +154,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         });
 
         //return the video ID
-        console.log("VIDEOID upload:",vid_id);
+        // console.log("VIDEOID upload:",vid_id);
         // return res.status(200).json({status: "OK", id: videoId});
     } catch(err) {
         console.log(err);
@@ -220,7 +220,7 @@ router.get("/processing-status", async (req: any, res: any) => {
 });
 
 const worker = new Worker('uploadQueue', async job => {
-    console.log(`PROCESSING JOB ${job.id} IN WORKER`);
+    // console.log(`PROCESSING JOB ${job.id} IN WORKER`);
     // Situation: If we had to upload from memoryStorage (multer) into disk, use this.
     // const { fileBuffer, filename_path, videoId, userId, title } = job.data
     // const outputDir = path.join('/root/youtube-clone/media', videoId.toString());
@@ -232,9 +232,9 @@ const worker = new Worker('uploadQueue', async job => {
 
 
     // Check that MP4 File exists at correct path
-    if (!fs.existsSync(inFile)) {
-        console.log("INPUT FILE DOES NOT EXIST IN WORKER");
-    }
+    // if (!fs.existsSync(inFile)) {
+    //     console.log("INPUT FILE DOES NOT EXIST IN WORKER");
+    // }
 
     // Obtain bash script command to run FFMPEG script.
     const scriptPath = path.join('/var/html/milestone2','dashscript.sh');
@@ -248,7 +248,7 @@ const worker = new Worker('uploadQueue', async job => {
             return;
         }
 
-        console.log("ffmpeg output:", stdout);
+        // console.log("ffmpeg output:", stdout);
         // Update video metadata with status 'complete'
         await db.update(video).set({
             status: 'complete',
@@ -261,7 +261,7 @@ const worker = new Worker('uploadQueue', async job => {
 // }, {connection: redisConfig, concurrency: 1})
 }, {
     connection: redisConfig,
-    concurrency: 2, 
+    concurrency: 4, 
     limiter: {
         max: 5,
         duration: 1000

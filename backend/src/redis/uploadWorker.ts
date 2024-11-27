@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
-import { redisConfig } from "../configs/redisConfig";
-import { db } from "../drizzle/db";
-import { video } from "../drizzle/schema";
+import { redisConfig } from "../configs/redisConfig.js";
+import { db } from "../drizzle/db.js";
+import { video } from "../drizzle/schema.js";
 import { eq } from "drizzle-orm";
 import { exec } from "child_process";
 import path from "path";

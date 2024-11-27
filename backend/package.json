@@ -5,15 +5,16 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsx src/index.ts",
+    "start": "NODE_ENV=production tsx src/index.ts",
     "dev": "tsx watch src/index",
     "generate": "drizzle-kit generate",
+    "look": "ls dist/src/drizzle && npm run fasdfaf",
     "migrate": "drizzle-kit migrate",
     "migration": "tsx src/db/migrate.ts",
     "studio": "drizzle-kit studio",
     "prebuild": "cp drizzle.config.ts src/",
     "postbuild": "rm src/drizzle.config.ts",
-    "build": "npm run prebuild && tsc && npm run postbuild",
+    "build": "tsc",
     "prod": "NODE_ENV=production node dist/src/index.js"
   },
   "keywords": [],
