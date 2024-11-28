@@ -19,7 +19,8 @@ const mc = Client.create("localhost:11211");
 const storage = multer.diskStorage({
     destination: '/var/html/media',
     filename: function (req:any, file:any, cb:any) {
-        cb(null, file.originalname);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, file.fieldname + '-' + uniqueSuffix + '.mp4')
     }
 })
 
@@ -40,7 +41,6 @@ router.post("/like", async (req: any, res: any) => {
         const { id, value } = req.body;
 
         let like_amount:any = (await mc.get(id)).value;
-        console.log(like_amount);
         if (like_amount === null) { //not in cache
             console.log("MISS");
             const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
@@ -69,18 +69,15 @@ router.post("/like", async (req: any, res: any) => {
             };
             //optimization return early if you have the value.
             const adder = value ? 1 : 0;
-            await mc.set(id,`${like_amount + adder}`,{ expires:15 });
-            
-
-            
             try {
                 await db.insert(vid_like).values(like_record);
             } catch(err) {
                 console.log(err);
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
             }
-
+            
             res.status(200).json({status: "OK", likes:like_amount + adder});
+            await mc.set(id,`${like_amount + adder}`,{ expires:15 });
             //adapt like/dislike count
             if (value === true) {
                 await db.update(video).set({
@@ -107,8 +104,8 @@ router.post("/like", async (req: any, res: any) => {
         let adder = value ? 1 : -1;
         if(value === null)
             adder = db_like_status ? -1 : 1; //if it ends up true --> null then -1, otherwise false from null then +1
-        await mc.set(id,`${like_amount + adder}`,{ expires:15 });
         res.status(200).json({status: "OK", likes: like_amount + adder});
+        await mc.set(id,`${like_amount + adder}`,{ expires:15 });
         //Adapt like/dislike count in videos table.
         if (db_like_status === true && value === false) {
             await db.update(video).set({
