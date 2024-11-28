@@ -25,7 +25,7 @@ interface VideoSimilarities {
     similar: number;
 }
 
-export const userSimilarity = async (id:any, count:any) => {
+export const userSimilarity = async (id:any, count:any, all_videos:any) => {
     //User query: get all users to then do cosine similiarity between them
     const users = await db.select().from(user);
 
@@ -39,16 +39,6 @@ export const userSimilarity = async (id:any, count:any) => {
             eq(view.viewed,true)
         )
     );
-
-    //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
-    const all_videos = await db.select().from(video)
-    .where(
-        eq(video.status,"complete")
-    );
-    // [
-    //     1: {video.id: -1,0,1},
-    //     2
-    // ]
 
     // Create a matrix with Row: User, Column: Video ID, each cell is -1,0,1 for disliked, null, liked respectively
     const user_matrix: UserMatrix = {};
@@ -65,7 +55,7 @@ export const userSimilarity = async (id:any, count:any) => {
             user_matrix[like.user_id][like.video_id] = 0;
     })
 
-    all_videos.forEach(video => {
+    all_videos.forEach((video:any) => {
         users.forEach(u => {
             if (!(video.id in user_matrix[u.id])) //if video.id doesn't exist in user (it has not clicked like or dislike)
                 user_matrix[u.id][video.id] = 0;
@@ -103,7 +93,7 @@ export const userSimilarity = async (id:any, count:any) => {
         if(similiar_users.similar > 0.0) { //kinda similar
             const liked_videos = all_likes.filter(like => like.user_id === similiar_users.user_id && like.liked === true);
             for(const like_vid of liked_videos){
-                if(!avoid_viewed_videos.some(v => v.video_id === like_vid.video_id))//as long as its not on avoid_viewed_videos
+                if(!avoid_viewed_videos.some((v:any) => v.video_id === like_vid.video_id))//as long as its not on avoid_viewed_videos
                     rec_videos.push(like_vid.video_id); //push video.id into it
                 if(rec_videos.length >= count) 
                     break;
@@ -115,7 +105,7 @@ export const userSimilarity = async (id:any, count:any) => {
 
     //2nd Choice: Recommend random unseen videos
     if(rec_videos.length < count) {
-        const unwatched_videos = all_videos.filter(v => !avoid_viewed_videos.some(view => view.video_id === v.id)); //as long as the video is not a video that's viewed already
+        const unwatched_videos = all_videos.filter((v:any) => !avoid_viewed_videos.some(view => view.video_id === v.id)); //as long as the video is not a video that's viewed already
         while(rec_videos.length < count && unwatched_videos.length > 0) {
             const rand_ind = Math.floor(Math.random()*unwatched_videos.length);
             rec_videos.push(unwatched_videos[rand_ind].id);
@@ -125,7 +115,7 @@ export const userSimilarity = async (id:any, count:any) => {
 
     //3rd Choice: (Final fallback) Recommend random seen videos
     if(rec_videos.length < count) {
-        const leftover_vid = all_videos.filter(v => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
+        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
         while(rec_videos.length < count && leftover_vid.length > 0){
             const rand_ind = Math.floor(Math.random()*leftover_vid.length);
             rec_videos.push(leftover_vid[rand_ind].id);
@@ -136,7 +126,7 @@ export const userSimilarity = async (id:any, count:any) => {
     return rec_videos;
 }
 
-export const videoSimilarity = async (id:any, uid:any, count:any) => {
+export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any) => {
     //User query: get all users
     const users = await db.select().from(user);
 
@@ -152,7 +142,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
     );
 
     //Video query: only get "complete" videos, don't have to use ids from videos still processing by workers
-    const all_videos = await db.select().from(video)
+    // const all_videos = await db.select().from(video)
     // .where(
     //     eq(video.status,"complete")
     // );
@@ -163,7 +153,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
 
     // Create a matrix with Row: Video ID, Column: User, each cell is -1,0,1 for disliked, null, liked respectively
     const video_matrix: VideoMatrix = {};
-    all_videos.forEach(v => {
+    all_videos.forEach((v:any) => {
         video_matrix[v.id] = {};
     });
     
@@ -176,7 +166,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
             video_matrix[like.video_id][like.user_id] = 0;
     })
 
-    all_videos.forEach(video => {
+    all_videos.forEach((video:any) => {
         users.forEach(u => {
             if (!(u.id in video_matrix[video.id])) //if user.id doesn't exist in video (it has not clicked like or dislike)
                 video_matrix[video.id][u.id] = 0;
@@ -185,7 +175,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
 
     //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key video id
     const similarities: VideoSimilarities[] = [];
-    all_videos.forEach(v => {
+    all_videos.forEach((v:any) => {
         if(v.id !== id) {
             const similar = similarity(
                 Object.values(video_matrix[id]),
@@ -199,7 +189,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
     //sort videos by most similar video
     similarities.sort((a,b) => b.similar - a.similar);
     
-    const avoid_viewed_videos_set = new Set(avoid_viewed_videos.map(v => v.video_id));
+    const avoid_viewed_videos_set = new Set(avoid_viewed_videos.map((v:any) => v.video_id));
 
     //1st Choice: Recommend videos that hasn't been seen before (all videos from most similar to least similar)
     const rec_videos:string[] = [];
@@ -212,7 +202,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any) => {
 
     //2nd Choice: Recommend random seen videos
     if(rec_videos.length < count) {
-        const leftover_vid = all_videos.filter(v => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
+        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v.id)); //as long as its not a rec vid already
         while(rec_videos.length < count && leftover_vid.length > 0){
             const rand_ind = Math.floor(Math.random()*leftover_vid.length);
             rec_videos.push(leftover_vid[rand_ind].id);

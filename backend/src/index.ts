@@ -9,6 +9,8 @@ import videoRoutes from './routes/videoRoutes.js';
 import session from 'express-session';
 import pkg from 'pg';
 // import bodyParser from 'body-parser';
+
+//tried clusters it gives a 5 second error for /api/like
 const {Pool} = pkg;
 import { authMiddlware } from './middleware/auth.js';
 import initDB from './drizzle/initDB.js';
@@ -39,8 +41,8 @@ app.use(session({
       createTableIfMissing: true
     }),
     secret: 'hufgirh348931jio1', //some string
-    saveUninitialized: false,
-    resave: false,
+    saveUninitialized: true,
+    resave: true,
     cookie: { 
       secure: false, //for http
       httpOnly: true,

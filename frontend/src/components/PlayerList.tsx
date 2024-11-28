@@ -27,6 +27,7 @@ const PlayerList = () => {
     }
 
     const fetchVideoId = async (num:number) => {  // Runs twice for some reason
+        console.log("Fetching rest of videos...")
         try {
             const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{videoId:id,count:num});
             if (!res.data.error)

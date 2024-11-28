@@ -9,9 +9,14 @@ if (!url) {
 
 const migrationClient = postgres(url); //typescript now confirms that it is not undefined after if check
 async function runMigrations(){
-    await migrate(drizzle(migrationClient), {
-        "migrationsFolder": "./src/drizzle/migrations"
-    });
+    try {
+        await migrate(drizzle(migrationClient), {
+            migrationsFolder: "./src/drizzle/migrations"
+        });
+    } finally {
+        await migrationClient.end();
+        console.log("Migration client has been closed.");
+    }
 }
 
 export default runMigrations;

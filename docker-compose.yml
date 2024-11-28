@@ -2,6 +2,7 @@
 services:
   db:
     image: postgres:latest
+    #command: postgres -c max_connections=400
     # ports:
     #   - "${POSTGRES_PORT}:5432"
     environment:
@@ -20,40 +21,14 @@ services:
   redis:
     image: redis:latest
     network_mode: host
-  
-  # mysql:
-  #   image: mysql/mysql-server
-  #   restart: unless-stopped
-  #   ports:
-  #     - 3306:3306
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: root_pass
-  #     MYSQL_DATABASE: gorse
-  #     MYSQL_USER: gorse
-  #     MYSQL_PASSWORD: gorse_pass
-  
-  # gorse:
-  #   image: zhenghaoz/gorse-in-one
-  #   ports:
-  #     - 8086:8086   # gRPC port
-  #     - 8088:8088   # HTTP port
-  #   environment:
-  #     # Use Redis as cache storage backend.
-  #     GORSE_CACHE_STORE: redis://localhost:6379/0
-  #     # Use PostgresSQL as data storage backend.
-  #     GORSE_DATA_STORE: mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse?parseTime=true
-  #   command: >
-  #     -c /etc/gorse/config.toml 
-  #     --log-path /var/log/gorse/master.log 
-  #     --cache-path /var/lib/gorse/master_cache.data
-  #   volumes:
-  #     # Mount the configuration file.
-  #     - ./config.toml:/etc/gorse/config.toml
-  #   depends_on:
-  #     redis:
-  #       condition: service_started
-  #     mysql:
-  #       condition: service_healthy
+
+  memcached:
+    image: memcached:latest
+    network_mode: host
+    command:
+      - --conn-limit=1024
+      - --memory-limit=64
+      - --threads=4
 
   backend:
     build:
@@ -74,13 +49,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      memcached:
+        condition: service_started
     deploy:
-      replicas: 3
+      replicas: 5
       endpoint_mode: dnsrr
       resources:
         limits:
-          cpus: '2.25'  # Limit to 1 CPU core
-          memory: 4.5g   # Limit to 2GB of memory
+          cpus: '5.5'  # Limit to 1 CPU core
+          memory: 10g   # Limit to 2GB of memory
 
   frontend:
     build:
@@ -108,8 +85,20 @@ services:
     depends_on:
       - frontend
       - backend
-
+  haproxy:
+    image: haproxy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    depends_on:
+      - frontend
+      - backend
+    network_mode: host
 #docker compose can automatically load .env file locally as long as on same directory
+
+
 
 volumes:
   postgres_data: #declares a volume 

@@ -19,55 +19,26 @@ router.post("/videos", async (req:any , res:any) => {
         const { videoId, count } = req.body;
         let rec_videos:any;
 
+        //get video data and pass it into funtion instead of querying twice
+        const video_data = await db.select({
+            id:video.id,
+            title:video.title,
+            description:video.description,
+            like:video.like,
+        }).from(video);
+
         if (videoId) { // video similarity algorithm
-            rec_videos = await videoSimilarity(videoId,req.user_id,count);
+            rec_videos = await videoSimilarity(videoId,req.user_id,count,video_data);
         }
         else { // user similarity algorithm
-            rec_videos = await userSimilarity(req.user_id,count);
+            rec_videos = await userSimilarity(req.user_id,count,video_data);
         }
-        const video_data_from_user = await db.select().from(video);
         const user_liked = await db.select().from(vid_like).where(eq(vid_like.user_id,req.user_id));
         const user_viewed = await db.select().from(view).where(eq(view.user_id,req.user_id));
-        //Obtain data from recommended video id in the form of [{id,desc,title,watched,liked,# likes}]
-        // const details = await Promise.all(
-        //     rec_videos.map(async (rec_vid_id: string) => {
-        //         const video_data = await db.select().from(video).where(eq(video.id,rec_vid_id)); //get the video data
-        //         const user_liked = await db.select().from(vid_like).where(
-        //             and(
-        //                 eq(vid_like.video_id,rec_vid_id),
-        //                 eq(vid_like.user_id,req.user_id)
-        //             ));
-        //         const viewed = await db.select().from(view).where(
-        //             and(
-        //                 eq(view.video_id, rec_vid_id),
-        //                 eq(view.user_id, req.user_id)
-        //             )
-        //         );
-        //         let watch = true;
-        //         if(viewed.length === 0) {
-        //             watch = false;
-        //         }
-        //         else{
-        //             if(viewed[0].viewed === false)
-        //                 watch = viewed[0].viewed;
-        //         }
-        //         let liked = null;
-        //         if(user_liked.length > 0){
-        //             liked = user_liked[0].liked
-        //         }
-        //         return {
-        //             id: rec_vid_id,
-        //             description: video_data[0].description,
-        //             title: video_data[0].title,
-        //             watched: watch,
-        //             liked: liked,
-        //             likevalues: video_data[0].like,
-        //         };
-        //     })
-        // )
+        
 
         let hashmap = new Map();
-        video_data_from_user.forEach(video => {
+        video_data.forEach(video => {
             hashmap.set(video.id, {
                 id: video.id,
                 title: video.title,
@@ -91,6 +62,7 @@ router.post("/videos", async (req:any , res:any) => {
         //any view.user_id, view.video_id combo that doesn't exist in view, we can assume the user has never watched it before
         res.status(200).json({status:"OK", videos: details});
     }catch(err:any){
+        console.log(err)
         return res.status(200).json({status:"ERROR", error:true, message:`internal server error in /api/videos: ${err.message}`})
     }
 })

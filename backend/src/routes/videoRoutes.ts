@@ -10,8 +10,11 @@ import { exec } from "child_process";
 import { uploadQueue } from "../redis/uploadQueue.js";
 import { Worker } from "bullmq";
 import { redisConfig } from "../configs/redisConfig.js";
+import { Client } from "memjs";
 
 const router = Router();
+
+const mc = Client.create("localhost:11211");
 
 const storage = multer.diskStorage({
     destination: '/var/html/media',
@@ -36,16 +39,26 @@ router.post("/like", async (req: any, res: any) => {
     try {
         const { id, value } = req.body;
 
-
-        //Checks if Video Exists
-        const video_query = await db.select().from(video).where(eq(video.id, id));
-        if (video_query.length === 0)
+        let like_amount:any = (await mc.get(id)).value;
+        console.log(like_amount);
+        if (like_amount === null) { //not in cache
+            console.log("MISS");
+            const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
+            if (like_amount_query.length === 0) {
+                await mc.set(id,'-1',{ expires:2 });
+                return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
+            }
+            like_amount = like_amount_query[0].like;
+        }
+        else if (like_amount === '-1') { //video id does not exist
             return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
-
+        }
+        else
+            console.log(`HIT: memcached has key ${id} = ${like_amount}`);
+        like_amount = +(like_amount);
         //Check if Video has been interacted before with Like or Dislike Button
-        const like_query = await db.select().from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
+        const like_query = await db.select({liked:vid_like.liked}).from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
         const db_like_status = like_query[0]?.liked;
-        // console.log("db_like_status: "+db_like_status);
 
         //Never interacted before, add entry
         if(like_query.length === 0){
@@ -54,8 +67,20 @@ router.post("/like", async (req: any, res: any) => {
                 video_id: id,
                 liked: value, //can be null
             };
-            await db.insert(vid_like).values(like_record);
+            //optimization return early if you have the value.
+            const adder = value ? 1 : 0;
+            await mc.set(id,`${like_amount + adder}`,{ expires:15 });
+            
 
+            
+            try {
+                await db.insert(vid_like).values(like_record);
+            } catch(err) {
+                console.log(err);
+                return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
+            }
+
+            res.status(200).json({status: "OK", likes:like_amount + adder});
             //adapt like/dislike count
             if (value === true) {
                 await db.update(video).set({
@@ -66,6 +91,7 @@ router.post("/like", async (req: any, res: any) => {
                     dislike: sql`${video.dislike} + 1`
                 }).where(eq(video.id, id));
             }
+            return;
         } 
         //Check for Same Value --> Return: Error
         else {
@@ -77,7 +103,12 @@ router.post("/like", async (req: any, res: any) => {
         //Update the DB with new liked value.
         await db.update(vid_like).set({ liked: value }).where(and(eq(vid_like.user_id,req.user_id),eq(vid_like.video_id,id)));
 
-
+        //value with like = true means like + 1, value with like = false means like -1
+        let adder = value ? 1 : -1;
+        if(value === null)
+            adder = db_like_status ? -1 : 1; //if it ends up true --> null then -1, otherwise false from null then +1
+        await mc.set(id,`${like_amount + adder}`,{ expires:15 });
+        res.status(200).json({status: "OK", likes: like_amount + adder});
         //Adapt like/dislike count in videos table.
         if (db_like_status === true && value === false) {
             await db.update(video).set({
@@ -99,11 +130,9 @@ router.post("/like", async (req: any, res: any) => {
             }).where(eq(video.id,id));
         }
         
-        //Return the new amount of likes in this video.
-        const new_record = await db.select({like: video.like}).from(video).where(eq(video.id,id));
-        return res.status(200).json({ status:"OK", likes: new_record[0].like });
         
     } catch(err) {
+        console.log(err);
         return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
     }
 });
@@ -128,7 +157,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         // console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
         const vid_id = `v${fileName.replace(".mp4","")}`;
-
+        console.log("/UPLOAD fileID: ", vid_id);
         res.status(200).json({status: "OK", id: vid_id});
         //Inserts into Video Table, the metadata for the video
         await db.insert(video).values({
@@ -145,13 +174,13 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         // console.log("filename_path in /api/upload:", filename_path);
 
         //Adds the job to the Queue (BullMQ) to be done by a Worker
-        await uploadQueue.add('process-upload', {
-            // fileBuffer: file.buffer,
-            filename_path,
-            vid_id,
-            userId: user_id,
-            title
-        });
+        // await uploadQueue.add('process-upload', {
+        //     // fileBuffer: file.buffer,
+        //     filename_path,
+        //     vid_id,
+        //     userId: user_id,
+        //     title
+        // });
 
         //return the video ID
         // console.log("VIDEOID upload:",vid_id);
@@ -188,6 +217,7 @@ router.post("/view", async (req: any, res: any) => {
         //Return data about whether it was viewed before or not.
         return res.status(200).json({status: "OK", viewed: viewed_before});
     } catch(err) {
+        console.log(err);
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error at /api/view"});
     }
 });
@@ -261,7 +291,7 @@ const worker = new Worker('uploadQueue', async job => {
 // }, {connection: redisConfig, concurrency: 1})
 }, {
     connection: redisConfig,
-    concurrency: 4, 
+    concurrency: 2, 
     limiter: {
         max: 5,
         duration: 1000
