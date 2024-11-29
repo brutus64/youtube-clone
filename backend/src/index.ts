@@ -29,9 +29,18 @@ app.use(cors( {
     credentials: true
 }))
 
+// const pgPool = new Pool({
+//     connectionString: process.env.DATABASE_URL, 
+//     max: 10 // Limit pool size for session management
+// });
+
+//attempt at using pgbouncer
 const pgPool = new Pool({
-    connectionString: process.env.DATABASE_URL, 
-    max: 10 // Limit pool size for session management
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  // Add these for better pgbouncer compatibility
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000
 });
 
 app.use(session({

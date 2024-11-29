@@ -17,6 +17,10 @@ if (!url) {
 //     });
 // }
 
-const queryClient = postgres(url);
+// const queryClient = postgres(url);
+const queryClient = postgres(url, {
+    max: 10,
+    connect_timeout: 10
+});
 export const db = drizzle(queryClient);
 // export const db = drizzle(queryClient, {schema, logger: true});

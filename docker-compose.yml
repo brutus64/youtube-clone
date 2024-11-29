@@ -18,6 +18,28 @@ services:
       - postgres_data:/var/lib/postgresql/data
     network_mode: host
     cpu_shares: 10240  # 1024 Default value, increase for more priorit
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+    environment:
+      - DB_USER=thewang
+      - DB_PASSWORD=cse356
+      - DB_HOST=localhost  # Since you're using network_mode: host
+      - DB_NAME=youtube-clone
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=20
+      - ADMIN_USERS=thewang
+      - AUTH_TYPE=md5
+    network_mode: host
+    # This will make pgbouncer listen on port 6432
+    ports:
+      - "6432:6432"
+    depends_on:
+      - db
   
   redis:
     image: redis:latest
@@ -51,6 +73,8 @@ services:
       db:
         condition: service_healthy
       memcached:
+        condition: service_started
+      pgbouncer:
         condition: service_started
     deploy:
       replicas: 5

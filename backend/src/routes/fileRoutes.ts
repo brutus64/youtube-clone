@@ -33,8 +33,8 @@ router.post("/videos", async (req:any , res:any) => {
         else { // user similarity algorithm
             rec_videos = await userSimilarity(req.user_id,count,video_data);
         }
-        const user_liked = await db.select({liked:vid_like.liked}).from(vid_like).where(eq(vid_like.user_id,req.user_id));
-        const user_viewed = await db.select({watched:view.viewed}).from(view).where(eq(view.user_id,req.user_id));
+        const user_liked = await db.select({video_id:vid_like.video_id,liked:vid_like.liked}).from(vid_like).where(eq(vid_like.user_id,req.user_id));
+        const user_viewed = await db.select({video_id:view.video_id,viewed:view.viewed}).from(view).where(eq(view.user_id,req.user_id));
         
 
         let hashmap = new Map();
