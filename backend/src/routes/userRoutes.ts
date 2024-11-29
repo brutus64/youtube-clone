@@ -15,7 +15,7 @@ router.post('/adduser', async (req: any, res: any) => {
         const { username, password, email } = req.body;
 
         //check if we already have a user with that email or not
-        const user_query = await db.select().from(user).where(eq(email,user.email));
+        const user_query = await db.select({id:user.id}).from(user).where(eq(email,user.email));
 
         //if there is a user already, return error
         if(user_query.length > 0)
@@ -51,13 +51,12 @@ router.get("/verify", async (req: any, res: any) => {
         console.log("decoded_email:",decoded_email);
     
         //check if user has same email and verification key
-        const user_query = await db.select().from(user).where(
+        const user_query = await db.select({id:user.id}).from(user).where(
           and(
             eq(user.email,decoded_email),
             eq(user.verification_key, decoded_key)
           ));
         
-        console.log("user_query from verify:", user_query);
         //if it does, we update to be enabled account
         if(user_query.length > 0){
           await db.update(user).set({disabled:false}).where(eq(user.email, email)); //find the email and set the disabled to false
@@ -78,7 +77,7 @@ router.post("/login", async (req: any, res: any) => {
         const { username, password } = req.body;
 
         //check if account matches and is not disabled
-        const user_query = await db.select().from(user).where(
+        const user_query = await db.select({id:user.id,username:user.username}).from(user).where(
             and(
                 eq(user.username, username),
                 eq(user.password,password),
@@ -88,7 +87,6 @@ router.post("/login", async (req: any, res: any) => {
         
         if(user_query.length == 0)
             return res.status(200).json({status:"ERROR",error:true,message:"Username/Password incorrect"})
-        console.log(user_query[0]);
         //Set user session to store the user.id and username
         req.session.user = { id: user_query[0].id, username: user_query[0].username };
         return res.status(200).json({status:"OK"});

@@ -27,18 +27,20 @@ interface VideoSimilarities {
 
 export const userSimilarity = async (id:any, count:any, all_videos:any) => {
     //User query: get all users to then do cosine similiarity between them
-    const users = await db.select().from(user);
+    const users = await db.select({id:user.id}).from(user);
 
     //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
     const all_likes = await db.select().from(vid_like);
 
     //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
-    const avoid_viewed_videos = await db.select().from(view).where(
+    const avoid_viewed_videos = await db.select({video_id:view.video_id}).from(view).where(
         and(
             eq(view.user_id,id),
             eq(view.viewed,true)
         )
     );
+
+    const avoid_viewed_videos_set = new Set(avoid_viewed_videos.map((v:any) => v.video_id));
 
     // Create a matrix with Row: User, Column: Video ID, each cell is -1,0,1 for disliked, null, liked respectively
     const user_matrix: UserMatrix = {};
@@ -93,7 +95,7 @@ export const userSimilarity = async (id:any, count:any, all_videos:any) => {
         if(similiar_users.similar > 0.0) { //kinda similar
             const liked_videos = all_likes.filter(like => like.user_id === similiar_users.user_id && like.liked === true);
             for(const like_vid of liked_videos){
-                if(!avoid_viewed_videos.some((v:any) => v.video_id === like_vid.video_id))//as long as its not on avoid_viewed_videos
+                if(!avoid_viewed_videos_set.has(like_vid.video_id))//as long as its not on avoid_viewed_videos
                     rec_videos.push(like_vid.video_id); //push video.id into it
                 if(rec_videos.length >= count) 
                     break;
@@ -105,7 +107,7 @@ export const userSimilarity = async (id:any, count:any, all_videos:any) => {
 
     //2nd Choice: Recommend random unseen videos
     if(rec_videos.length < count) {
-        const unwatched_videos = all_videos.filter((v:any) => !avoid_viewed_videos.some(view => view.video_id === v.id)); //as long as the video is not a video that's viewed already
+        const unwatched_videos = all_videos.filter((v:any) => !avoid_viewed_videos_set.has(v.id)); //as long as the video is not a video that's viewed already
         while(rec_videos.length < count && unwatched_videos.length > 0) {
             const rand_ind = Math.floor(Math.random()*unwatched_videos.length);
             rec_videos.push(unwatched_videos[rand_ind].id);
@@ -128,13 +130,13 @@ export const userSimilarity = async (id:any, count:any, all_videos:any) => {
 
 export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any) => {
     //User query: get all users
-    const users = await db.select().from(user);
+    const users = await db.select({id:user.id}).from(user);
 
     //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
     const all_likes = await db.select().from(vid_like);
 
     //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
-    const avoid_viewed_videos = await db.select().from(view).where(
+    const avoid_viewed_videos = await db.select({video_id:view.video_id}).from(view).where(
         and(
             eq(view.user_id,uid),
             eq(view.viewed,true)

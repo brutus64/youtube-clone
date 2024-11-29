@@ -193,7 +193,7 @@ router.post("/view", async (req: any, res: any) => {
         const { id } = req.body;
 
         //Query "View" Table to see if it existed before or not (has scrolled past it before/played it before or not)
-        const view_query = await db.select().from(view).where(and(eq(view.video_id,id),eq(view.user_id,req.user_id)));
+        const view_query = await db.select({viewed: view.viewed}).from(view).where(and(eq(view.video_id,id),eq(view.user_id,req.user_id)));
         let viewed_before = false;
 
         //Never seen before: Insert into View Table "True" as you went to that page. Also increment "views" in "Video" Table
@@ -227,7 +227,7 @@ interface VideoStatus {
 router.get("/processing-status", async (req: any, res: any) => {
     try{
         //Query "Video" table to obtain video metadata about all videos uploaded by user
-        const video_query = await db.select().from(video).where(eq(req.user_id,video.uploaded_by));
+        const video_query = await db.select({id: video.id, title:video.title, status: video.status}).from(video).where(eq(req.user_id,video.uploaded_by));
         const videos: VideoStatus[] = [];
 
         //Append into an array, object of video metadata containing {VideoID, Title, Status}
