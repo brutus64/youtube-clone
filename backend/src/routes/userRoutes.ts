@@ -88,7 +88,7 @@ router.post("/login", async (req: any, res: any) => {
         if(user_query.length == 0)
             return res.status(200).json({status:"ERROR",error:true,message:"Username/Password incorrect"})
         //Set user session to store the user.id and username
-        req.session.user = { id: user_query[0].id, username: user_query[0].username };
+        req.session.user = { id: user_query[0].id, username: user_query[0].username, map: []};
         return res.status(200).json({status:"OK"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal error to /login"});

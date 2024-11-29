@@ -42,7 +42,7 @@ router.post("/like", async (req: any, res: any) => {
 
         let like_amount:any = (await mc.get(id)).value;
         if (like_amount === null) { //not in cache
-            console.log("MISS");
+            // console.log("MISS");
             const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
             if (like_amount_query.length === 0) {
                 await mc.set(id,'-1',{ expires:2 });
@@ -53,8 +53,8 @@ router.post("/like", async (req: any, res: any) => {
         else if (like_amount === '-1') { //video id does not exist
             return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
         }
-        else
-            console.log(`HIT: memcached has key ${id} = ${like_amount}`);
+        // else
+        //     console.log(`HIT: memcached has key ${id} = ${like_amount}`);
         like_amount = +(like_amount);
         //Check if Video has been interacted before with Like or Dislike Button
         const like_query = await db.select({liked:vid_like.liked}).from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
@@ -154,7 +154,7 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         // console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
         const vid_id = `v${fileName.replace(".mp4","")}`;
-        console.log("/UPLOAD fileID: ", vid_id);
+        // console.log("/UPLOAD fileID: ", vid_id);
         res.status(200).json({status: "OK", id: vid_id});
         //Inserts into Video Table, the metadata for the video
         await db.insert(video).values({
@@ -233,7 +233,7 @@ router.get("/processing-status", async (req: any, res: any) => {
         //Append into an array, object of video metadata containing {VideoID, Title, Status}
         if(video_query.length > 0){
             video_query.forEach(vid => {
-                console.log("ID: ", vid.id, '\nTITLE: ', vid.title, '\nSTATUS:', vid.status);
+                // console.log("ID: ", vid.id, '\nTITLE: ', vid.title, '\nSTATUS:', vid.status);
                 videos.push({id: vid.id, title: vid.title, status: vid.status});
             })
         }
