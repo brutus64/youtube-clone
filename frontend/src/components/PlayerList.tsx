@@ -29,7 +29,7 @@ const PlayerList = () => {
     const fetchVideoId = async (num:number) => {  // Runs twice for some reason
         console.log("Fetching rest of videos...")
         try {
-            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{videoId:id,count:num});
+            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/ExtendedVideos",{videoId:id,count:num});
 console.log(res.data);
             if (!res.data.error)
                 return res.data.videos;
@@ -102,7 +102,7 @@ console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
     return (
         <div className="flex items-center flex-col">
             {moreVideos && videoref.current.vidList.map((vidData,i) => 
-                <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
+                <VideoPlayer id={vidData.id} vidData={vidData} visible={i===videoref.current.ind}/>
             )}
             {/* {!moreVideos && 
             <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-300 flex flex-col justify-center items-center gap-2.5 rounded-2xl">

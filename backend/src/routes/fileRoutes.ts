@@ -128,15 +128,60 @@ router.get("/video/:id", async (req:any, res:any) => {
 
 
 //extra 
-router.post("/getFilePath", async (req:any , res:any) => {
+//also returns manifest_path
+router.post("/ExtendedVideos", async (req:any , res:any) => {
     try {
-        const { videoId } = req.body;
-        const data = await videoCollection.findOne({ _id: new ObjectId(videoId)}, { projection: { thumbnail_path: 1, manifest_path: 1 } });
-        return res.status(200).json({status:"OK", thumbnail_path: data!.thumbnail_path, manifest_path: data!.manifest_path });
-    } catch(err:any){
-        console.log(err);
-        return res.status(200).json({status:"ERROR", error:true, message:`internal server error in /api/getFilePath: ${err.message}`});
-    }
+        const { videoId, count } = req.body;
+        let rec_videos:any;
 
+        //get video data and pass it into funtion instead of querying twice
+        const video_data = await videoCollection.find(
+            {}, //filter
+            { projection: { _id: 1, title: 1, description: 1, like: 1 , manifest_path: 1} } //feilds to return
+        ).toArray();
+        if (videoId) { // video similarity algorithm
+            rec_videos = await videoSimilarity(videoId,req.user_id,count,video_data);
+        }
+        else { // user similarity algorithm
+            rec_videos = await userSimilarity(req.user_id,count,video_data);
+        }
+        const user_liked = await likeCollection.find(
+            { user_id: req.user_id }, 
+            { projection: { video_id: 1, liked: 1 } }
+        ).toArray();
+        const user_viewed = await viewCollection.find(
+            { user_id: req.user_id },
+            { projection: { video_id: 1, viewed: 1 } }
+        ).toArray();
+
+        let hashmap = new Map();
+        video_data.forEach(video => {
+            hashmap.set(video._id, {
+                id: video._id,
+                title: video.title,
+                description: video.description,
+                likevalues: video.like,
+                watched: false,
+                liked: null,
+                manifest_path: video.manifest_path.replace("/var/html/media",""),
+            });
+        });
+        user_liked.forEach((entry:any) => {
+            hashmap.get(entry.video_id).liked = entry.liked;
+        });
+        user_viewed.forEach((entry:any)=>{
+            hashmap.get(entry.video_id).watched = entry.viewed;
+        })
+        const details = rec_videos.map((rec_vid_id:string) => {
+            return hashmap.get(rec_vid_id);
+        });
+
+        //any vid_like.user_id,vid_like.video_id combo that doesn't exist in vid_like we can assume the user has never clicked on like or dislike so its null
+        //any view.user_id, view.video_id combo that doesn't exist in view, we can assume the user has never watched it before
+        res.status(200).json({status:"OK", videos: details});
+    }catch(err:any){
+        console.log(err)
+        return res.status(200).json({status:"ERROR", error:true, message:`internal server error in /api/ExtendedVideos: ${err.message}`})
+    }
 })
 export default router;
