@@ -37,7 +37,7 @@ router.post("/videos", async (req:any , res:any) => {
 
         let hashmap = new Map();
         video_data.forEach(video => {
-            hashmap.set(video._id, {
+            hashmap.set(video._id.toString(), {
                 id: video._id,
                 title: video.title,
                 description: video.description,
@@ -53,7 +53,7 @@ router.post("/videos", async (req:any , res:any) => {
             hashmap.get(entry.video_id).watched = entry.viewed;
         })
         const details = rec_videos.map((rec_vid_id:string) => {
-            return hashmap.get(rec_vid_id);
+            return hashmap.get(rec_vid_id.toString());
         });
 
         //any vid_like.user_id,vid_like.video_id combo that doesn't exist in vid_like we can assume the user has never clicked on like or dislike so its null
@@ -69,14 +69,15 @@ router.post("/videos", async (req:any , res:any) => {
 router.get("/manifest/:id", async (req: any, res: any) => {
     try{
         const id = req.params.id;
-        const manifestPath = await videoCollection.findOne(
-            {_id:new ObjectId(id)},
-            {projection:{manifest_path:1}}
-        );
+        //perhaps switch to using the db then getting the path off of it?
+        // const video_query = await db.select().from(video).where(eq(id,video.id));
+        // if(video_query.length > 0)
+        //     console.log("Grabbing from DB: manifest path:", video_query[0].manifest_path);
+        const manifestPath = `/var/html/media/${id}.mpd`;
 // console.log("ACTUAL manifest path:", manifestPath);
 // console.log("EXISTS?", fs.existsSync(manifestPath));
-        if(fs.existsSync(manifestPath!.manifest_path)) 
-            return res.sendFile(manifestPath!.manifest_path);
+        if(fs.existsSync(manifestPath)) 
+            return res.sendFile(manifestPath);
         return res.status(200).json({status:"ERROR",error:true,message:"manifest not found. for /api/manifest/:id"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from /api/manifest/:id most likely the manifestPath attempt to read does not work"});
@@ -87,12 +88,14 @@ router.get("/manifest/:id", async (req: any, res: any) => {
 router.get("/thumbnail/:id", async (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = await videoCollection.findOne(
-            {_id:new ObjectId(id)},
-            {projection:{thumbnail_path:1}}
-        );
-        if(fs.existsSync(thumbnailPath!.thumbnail_path))
-            return res.sendFile(thumbnailPath!.thumbnail_path);
+        //perhaps switch to using the db then getting the path off of it?
+        // const video_query = await db.select().from(video).where(eq(id,video.id));
+        // if(video_query.length > 0)
+        //     console.log("Grabbing from DB: thumbnail path:", video_query[0].thumbnail_path);
+        const thumbnailPath = `/var/html/media/${id}.jpg`;
+// console.log("ACTUAL thumbnail path:", thumbnailPath);
+        if(fs.existsSync(thumbnailPath))
+            return res.sendFile(thumbnailPath);
         return res.status(200).json({status:"ERROR",error:true,message:"thumbnail not found. for /api/thumbnail/:id"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from api/thumbnail/:id most likely the thumbnailPath attempts to read does not work"});
@@ -103,7 +106,7 @@ router.get("/thumbnail/:id", async (req: any, res: any) => {
 router.get("/video/:id", async (req:any, res:any) => {
     try {
         const id = req.params.id;
-        const video_data = await videoCollection.findOne({ _id: new ObjectId(id) });
+        const video_data = await videoCollection.findOne({ _id: id });
         if(video_data !== null) {
             console.log("Data for video id ", id, " found");
             const user_liked = await db.collection('vid_like').findOne({video_id: id, user_id: req.user_id});

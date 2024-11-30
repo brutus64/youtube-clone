@@ -29,8 +29,7 @@ const PlayerList = () => {
     const fetchVideoId = async (num:number) => {  // Runs twice for some reason
         console.log("Fetching rest of videos...")
         try {
-            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/ExtendedVideos",{videoId:id,count:num});
-console.log(res.data);
+            const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{videoId:id,count:num});
             if (!res.data.error)
                 return res.data.videos;
             else
@@ -49,7 +48,6 @@ console.log(res.data);
             if (videoref.current.ind > 0) {
                 videoref.current.ind -= 1;
                 navigate(`/play/${videoref.current.vidList[videoref.current.ind].id}`);
-console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
             }
         }
         else {
@@ -63,7 +61,6 @@ console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
             if (videoref.current.ind < videoref.current.vidList.length-3) {
                 videoref.current.ind += 1;
                 navigate(`/play/${videoref.current.vidList[videoref.current.ind].id}`);
-console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
             }
             else {// else recommend 10 more videos and then navigate
                 const newVideos = await fetchVideoId(10);
@@ -102,7 +99,7 @@ console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
     return (
         <div className="flex items-center flex-col">
             {moreVideos && videoref.current.vidList.map((vidData,i) => 
-                <VideoPlayer id={vidData.id} vidData={vidData} visible={i===videoref.current.ind}/>
+                <VideoPlayer vidData={vidData} visible={i===videoref.current.ind}/>
             )}
             {/* {!moreVideos && 
             <div className="p-1 m-5 w-[940px] h-[530px] box-border bg-slate-300 flex flex-col justify-center items-center gap-2.5 rounded-2xl">

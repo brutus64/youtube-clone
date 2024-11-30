@@ -44,6 +44,7 @@ async function initVideos() {
             const mpdPath = mediaPath + "/v"+i+".mpd";
             const jpgPath = mediaPath + "/v"+i+".jpg";
             await videoCollection.insertOne({
+                _id: "v"+i as any,
                 title: title,
                 description: title,
                 status: 'complete',

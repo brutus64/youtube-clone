@@ -1,4 +1,4 @@
-
+import { MongoClient, ObjectId } from 'mongodb';
 export interface User {
     _id: string;
     username: string;
@@ -8,7 +8,7 @@ export interface User {
     verification_key: string;
 }
 export interface Video {
-    _id: string;
+    _id: string | ObjectId;
     title: string;
     description: string;
     status: string; // for processing status

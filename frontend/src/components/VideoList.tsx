@@ -32,7 +32,7 @@ const VideoList = () => {
     },[]);
     return (
         <div className="grid overflow-auto gap-2 p-3 grid-cols-auto-fit-320">
-            {videosIds.map(id =>
+            {videosIds &&videosIds.map(id =>
                 <Thumbnail key={id} vid={id}/>
             )}
         </div>

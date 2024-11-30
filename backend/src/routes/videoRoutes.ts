@@ -41,7 +41,7 @@ router.post("/like", async (req: any, res: any) => {
 
         //get total amount of likes from video
         const like_amount_query = await videoCollection.findOne(
-            {_id:new ObjectId(id)},
+            {_id:id},
             {projection:{like:1}}
         )
         if (!like_amount_query) {
@@ -136,12 +136,11 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
         // console.log("filename with diskstorage", fileName);
         //Inserts into Video Table, the metadata for the video
         const vid_id = `v${fileName.replace(".mp4","")}`;
-        const key = crypto.randomBytes(24).toString("hex");
         // console.log("/UPLOAD fileID: ", vid_id);
-        res.status(200).json({status: "OK", id: key});
+        res.status(200).json({status: "OK", id: vid_id});
         //Inserts into Video Table, the metadata for the video
         await videoCollection.insertOne({
-            _id: new ObjectId(key),
+            _id: vid_id as any,
             title: title,
             description: description,
             status: 'processing',
