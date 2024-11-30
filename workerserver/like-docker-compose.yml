@@ -1,0 +1,47 @@
+
+services:
+  redis:
+    image: redis:latest
+    network_mode: host
+
+  memcached:
+    image: memcached:latest
+    # network_mode: host
+    command:
+      - --conn-limit=1024
+      - --memory-limit=64
+      - --threads=4
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - /root/youtube-clone/media:/var/html/media
+      - /root/youtube-clone/dash-script:/var/html
+    # volumes:
+    #   - ./backend:/app #bind mounting
+    # ports:
+    #   - "5000-5002:5000"
+    env_file:
+      - ./backend/.env
+    # network_mode: host
+    deploy:
+      replicas: 2
+      # endpoint_mode: dnsrr
+      resources:
+        limits:
+          # cpus: '7'  # Limit to 1 CPU core
+          memory: 14g   # Limit to 2GB of memory
+
+  haproxy:
+    image: haproxy:latest
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    # network_mode: host
+    # privilege: true
+    ports:
+      - 80:80
+ 
+
+volumes:
+  postgres_data: #declares a volume 
