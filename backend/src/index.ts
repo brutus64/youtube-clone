@@ -2,18 +2,15 @@
 import 'dotenv/config';
 import express, { urlencoded } from 'express';
 import cors from 'cors';
-import PgSession from 'connect-pg-simple';
 import userRoutes from './routes/userRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import session from 'express-session';
-import pkg from 'pg';
 // import bodyParser from 'body-parser';
 
 //tried clusters it gives a 5 second error for /api/like
-const {Pool} = pkg;
 import { authMiddlware } from './middleware/auth.js';
-import initDB from './drizzle/initDB.js';
+import initDB from './mongoClient/initDB.js';
 //MIDDLEWARE
 const app = express();
 const port: any = process.env.PORT || 5000;
@@ -29,26 +26,7 @@ app.use(cors( {
     credentials: true
 }))
 
-// const pgPool = new Pool({
-//     connectionString: process.env.DATABASE_URL, 
-//     max: 10 // Limit pool size for session management
-// });
-
-//attempt at using pgbouncer
-const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-  // Add these for better pgbouncer compatibility
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 10000
-});
-
 app.use(session({
-    store: new (PgSession(session))({
-      pool: pgPool,
-      tableName: "session",
-      createTableIfMissing: true
-    }),
     secret: 'hufgirh348931jio1', //some string
     saveUninitialized: true,
     resave: true,
@@ -105,7 +83,7 @@ async function tryListen(portNum:number) {
     await initDB();
   })
   .on('error', (err:any) => {
-    if (err.code === 'EADDRINUSE' && portNum < 5010) {
+    if (err.code === 'EADDRINUSE' && portNum < 5030) {
       console.log(`Port ${portNum} is in use, trying another...`);
       tryListen(portNum + 1);
     } else {

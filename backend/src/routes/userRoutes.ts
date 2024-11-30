@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddlware } from '../middleware/auth.js';
-import { user } from '../drizzle/schema.js';
-import { db } from '../drizzle/db.js';
+import { user } from '../mongoClient/schema.js';
+import { db, userCollection } from '../mongoClient/db.js';
 
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -15,10 +15,9 @@ router.post('/adduser', async (req: any, res: any) => {
         const { username, password, email } = req.body;
 
         //check if we already have a user with that email or not
-        const user_query = await db.select({id:user.id}).from(user).where(eq(email,user.email));
-
+        const user_query = await userCollection.findOne({ email: email });
         //if there is a user already, return error
-        if(user_query.length > 0)
+        if(user_query === null)
             return res.status(200).json({status: "ERROR",error:true,message:"email already exists"});
 
         //otherwise create a verification key for it and insert into db

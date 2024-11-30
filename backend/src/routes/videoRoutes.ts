@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddlware } from "../middleware/auth.js";
-import { db } from "../drizzle/db.js";
-import { video, view, vid_like } from "../drizzle/schema.js";
+import { db } from "../mongoClient/db.js";
+import { video, view, vid_like } from "../mongoClient/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
@@ -14,7 +14,7 @@ import { Client } from "memjs";
 
 const router = Router();
 
-const mc = Client.create("localhost:11211");
+// const mc = Client.create("localhost:11211");
 
 const storage = multer.diskStorage({
     destination: '/var/html/media',
@@ -40,22 +40,31 @@ router.post("/like", async (req: any, res: any) => {
     try {
         const { id, value } = req.body;
 
-        let like_amount:any = (await mc.get(id)).value;
-        if (like_amount === null) { //not in cache
-            // console.log("MISS");
-            const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
-            if (like_amount_query.length === 0) {
-                await mc.set(id,'-1',{ expires:2 });
-                return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
-            }
-            like_amount = like_amount_query[0].like;
-        }
-        else if (like_amount === '-1') { //video id does not exist
+        // let like_amount:any = (await mc.get(id)).value;
+        // if (like_amount === null) { //not in cache
+        //     // console.log("MISS");
+        //     const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
+        //     if (like_amount_query.length === 0) {
+        //         await mc.set(id,'-1',{ expires:2 });
+        //         return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
+        //     }
+        //     like_amount = like_amount_query[0].like;
+        // }
+        // else if (like_amount === '-1') { //video id does not exist
+        //     return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
+        // }
+        // // else
+        // //     console.log(`HIT: memcached has key ${id} = ${like_amount}`);
+        // like_amount = +(like_amount);
+
+        //get total amount of likes from video
+        const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
+        if (like_amount_query.length === 0) {
+            console.log("Video not found")
             return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
         }
-        // else
-        //     console.log(`HIT: memcached has key ${id} = ${like_amount}`);
-        like_amount = +(like_amount);
+        const like_amount:any = like_amount_query[0].like;
+
         //Check if Video has been interacted before with Like or Dislike Button
         const like_query = await db.select({liked:vid_like.liked}).from(vid_like).where(and(eq(vid_like.video_id,id),eq(vid_like.user_id,req.user_id)));
         const db_like_status = like_query[0]?.liked;
@@ -76,8 +85,8 @@ router.post("/like", async (req: any, res: any) => {
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
             }
             
-            res.status(200).json({status: "OK", likes:like_amount + adder});
-            await mc.set(id,`${like_amount + adder}`,{ expires:15 });
+            
+            // await mc.set(id,`${like_amount + adder}`,{ expires:15 });
             //adapt like/dislike count
             if (value === true) {
                 await db.update(video).set({
@@ -88,7 +97,7 @@ router.post("/like", async (req: any, res: any) => {
                     dislike: sql`${video.dislike} + 1`
                 }).where(eq(video.id, id));
             }
-            return;
+            return res.status(200).json({status: "OK", likes:like_amount + adder});
         } 
         //Check for Same Value --> Return: Error
         else {
@@ -104,8 +113,8 @@ router.post("/like", async (req: any, res: any) => {
         let adder = value ? 1 : -1;
         if(value === null)
             adder = db_like_status ? -1 : 1; //if it ends up true --> null then -1, otherwise false from null then +1
-        res.status(200).json({status: "OK", likes: like_amount + adder});
-        await mc.set(id,`${like_amount + adder}`,{ expires:15 });
+        
+        // await mc.set(id,`${like_amount + adder}`,{ expires:15 });
         //Adapt like/dislike count in videos table.
         if (db_like_status === true && value === false) {
             await db.update(video).set({
@@ -126,6 +135,7 @@ router.post("/like", async (req: any, res: any) => {
                 dislike: sql`${video.dislike} - 1`
             }).where(eq(video.id,id));
         }
+        return res.status(200).json({status: "OK", likes: like_amount + adder});
         
         
     } catch(err) {
@@ -133,6 +143,88 @@ router.post("/like", async (req: any, res: any) => {
         return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
     }
 });
+
+// router.post("/like", async (req: any, res: any) => {
+//     try {
+//         const { id, value } = req.body;
+//         const map = new Map(req.session.user.map);
+//         const likeValue:any = map.get(id); //[boolean, val]
+
+//         if(likeValue === undefined || likeValue === null) {
+//             const like_amount_query = await db.select({like:video.like}).from(video).where(eq(video.id, id));
+//             if (like_amount_query.length === 0) {
+//                 return res.status(200).json({status: "ERROR",error:true,message:"video does not exist"});
+//             }
+//             const adder = value ? 1 : 0;
+//             let likeCount = adder;
+//             if(like_amount_query[0] !== null && like_amount_query[0].like !== null)
+//                 likeCount += like_amount_query[0].like;
+// //first time like
+//             res.status(200).json({status: "OK", likes:likeCount});
+//             map.set(id,{"liked":value, "count":likeCount});
+//             req.session.user.map = Array.from(map);
+//             const like_record = {
+//                 user_id: req.user_id,
+//                 video_id: id,
+//                 liked: value, //can be null
+//             };
+//             //vidlike update
+//             try {
+//                 await db.insert(vid_like).values(like_record);
+//             } catch(err) { //should nvr happen
+//                 console.log(err);
+//                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
+//             }
+//             //video update
+//             if (value === true) {
+//                 await db.update(video).set({
+//                     like: sql`${video.like} + 1`
+//                 }).where(eq(video.id, id));
+//             } else if (value === false) {
+//                 await db.update(video).set({
+//                     dislike: sql`${video.dislike} + 1`
+//                 }).where(eq(video.id, id));
+//             }
+// //is a vid_like entry
+//         } else {
+//             if(value === likeValue.liked) {
+//                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
+//             }
+//             const db_like_status = likeValue.liked;
+//             let adder = value ? 1 : -1;
+//             if(value === null)
+//                 adder = db_like_status ? -1 : 1;
+//             const likeCount = likeValue.count + adder
+//             res.status(200).json({status: "OK", likes: likeValue.count + adder});
+//             map.set(id,{"liked":value, "count":likeCount});
+//             req.session.user.map = Array.from(map);
+//             //Update the DB with new liked value.
+//             await db.update(vid_like).set({ liked: value }).where(and(eq(vid_like.user_id,req.user_id),eq(vid_like.video_id,id)));
+//             if (db_like_status === true && value === false) {
+//                 await db.update(video).set({
+//                     like: sql`${video.like} - 1`,
+//                     dislike: sql`${video.dislike} + 1`
+//                 }).where(eq(video.id,id));
+//             } else if (db_like_status === true && value === null){
+//                 await db.update(video).set({
+//                     like: sql`${video.like} - 1`
+//                 }).where(eq(video.id,id));
+//             } else if (db_like_status === false && value === true) {
+//                 await db.update(video).set({
+//                     like: sql`${video.like} + 1`,
+//                     dislike: sql`${video.dislike} - 1`
+//                 }).where(eq(video.id,id));
+//             } else if (db_like_status === false && value === null) {
+//                 await db.update(video).set({
+//                     dislike: sql`${video.dislike} - 1`
+//                 }).where(eq(video.id,id));
+//             }
+//         }
+//     } catch(err) {
+//         console.log(err);
+//         return res.status(200).json({ status:"ERROR", error: true, message: "internal server error in /api/like: "+err});
+//     }
+// });
 
 //multer handling mp4File will upload to "/var/html/media"
 router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {

@@ -1,57 +1,25 @@
 
 services:
-  db:
-    image: postgres:latest
-    command: postgres -c max_connections=500
-    # ports:
-    #   - "${POSTGRES_PORT}:5432"
+  mongo:
+    image: mongo
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      GLIBC_TUNABLES: glibc.pthread.rseq=0
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    network_mode: host
-    cpu_shares: 10240  # 1024 Default value, increase for more priorit
-
-  pgbouncer:
-    image: edoburu/pgbouncer:latest
-    volumes:
-      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
-      - ./userlist.txt:/etc/pgbouncer/userlist.txt
-    environment:
-      - DB_USER=thewang
-      - DB_PASSWORD=cse356
-      - DB_HOST=localhost  # Since you're using network_mode: host
-      - DB_NAME=youtube-clone
-      - POOL_MODE=transaction
-      - MAX_CLIENT_CONN=1000
-      - DEFAULT_POOL_SIZE=20
-      - ADMIN_USERS=thewang
-      - AUTH_TYPE=md5
-    network_mode: host
-    # This will make pgbouncer listen on port 6432
+      - /root/youtube-clone/db.conf:/etc/mongod.conf
     ports:
-      - "6432:6432"
-    depends_on:
-      - db
+      - 27017:27017
   
   redis:
     image: redis:latest
     network_mode: host
 
-  memcached:
-    image: memcached:latest
-    network_mode: host
-    command:
-      - --conn-limit=1024
-      - --memory-limit=64
-      - --threads=4
+  # memcached:
+  #   image: memcached:latest
+  #   network_mode: host
+  #   command:
+  #     - --conn-limit=1024
+  #     - --memory-limit=64
+  #     - --threads=4
 
   backend:
     build:
@@ -67,22 +35,21 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:6432/${POSTGRES_DB}
     network_mode: host
-    depends_on:
-      db:
-        condition: service_healthy
-      memcached:
-        condition: service_started
-      pgbouncer:
-        condition: service_started
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    #   memcached:
+    #     condition: service_started
+
     deploy:
-      replicas: 5
-      endpoint_mode: dnsrr
+      replicas: 8
+      # endpoint_mode: dnsrr
       resources:
         limits:
-          # cpus: '5.5'  # Limit to 1 CPU core
-          memory: 10g   # Limit to 2GB of memory
+          # cpus: '1'  # Limit to 1 CPU core
+          memory: 4g   # Limit to 2GB of memory
 
   frontend:
     build:
@@ -110,20 +77,9 @@ services:
     depends_on:
       - frontend
       - backend
-  # haproxy:
-  #   image: haproxy:latest
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   network_mode: host
+
 #docker compose can automatically load .env file locally as long as on same directory
-
-
 
 volumes:
   postgres_data: #declares a volume 
+  # postgres_replica1_data:
