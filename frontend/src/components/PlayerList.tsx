@@ -30,6 +30,7 @@ const PlayerList = () => {
         console.log("Fetching rest of videos...")
         try {
             const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/videos",{videoId:id,count:num});
+console.log(res.data);
             if (!res.data.error)
                 return res.data.videos;
             else
@@ -48,6 +49,7 @@ const PlayerList = () => {
             if (videoref.current.ind > 0) {
                 videoref.current.ind -= 1;
                 navigate(`/play/${videoref.current.vidList[videoref.current.ind].id}`);
+console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
             }
         }
         else {
@@ -61,6 +63,7 @@ const PlayerList = () => {
             if (videoref.current.ind < videoref.current.vidList.length-3) {
                 videoref.current.ind += 1;
                 navigate(`/play/${videoref.current.vidList[videoref.current.ind].id}`);
+console.log("CURRENT",videoref.current.vidList[videoref.current.ind].id);
             }
             else {// else recommend 10 more videos and then navigate
                 const newVideos = await fetchVideoId(10);

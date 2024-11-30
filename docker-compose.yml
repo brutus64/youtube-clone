@@ -6,8 +6,7 @@ services:
       GLIBC_TUNABLES: glibc.pthread.rseq=0
     volumes:
       - /root/youtube-clone/db.conf:/etc/mongod.conf
-    ports:
-      - 27017:27017
+    network_mode: host
   
   redis:
     image: redis:latest
@@ -35,7 +34,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:6432/${POSTGRES_DB}
+      - DATABASE_URL=mongodb://localhost:27017/youtube
     network_mode: host
     # depends_on:
     #   db:
@@ -80,6 +79,6 @@ services:
 
 #docker compose can automatically load .env file locally as long as on same directory
 
-volumes:
-  postgres_data: #declares a volume 
-  # postgres_replica1_data:
+# volumes:
+#   postgres_data: #declares a volume 
+#   # postgres_replica1_data:

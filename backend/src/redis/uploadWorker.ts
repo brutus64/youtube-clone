@@ -1,8 +1,6 @@
 import { Worker } from "bullmq";
 import { redisConfig } from "../configs/redisConfig.js";
-import { db } from "../mongoClient/db.js";
-import { video } from "../mongoClient/schema.js";
-import { eq } from "drizzle-orm";
+import { videoCollection } from "../mongoClient/db.js";
 import { exec } from "child_process";
 import path from "path";
 import fs from "fs";
@@ -27,16 +25,22 @@ const worker = new Worker('uploadQueue', async job => {
     exec(command, async (error, stdout, stderr) => {
         if (error) {
             console.log(`Error processing video in /api/upload: ${error.message}`);
-            await db.update(video).set({ status: 'error' }).where(eq(video.id, videoId));
+            await videoCollection.updateOne(
+                {_id:videoId},
+                {$set:{status:"error"}}
+            )
             return;
         }
 
         // Update video metadata with status 'complete'
-        await db.update(video).set({
-            status: 'complete',
-            manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
-            thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
-        }).where(eq(video.id, videoId));
+        await videoCollection.updateOne(
+            {_id:videoId},
+            {$set:{
+                status: 'complete',
+                manifest_path: path.join('/var/html/media', `${videoId}.mpd`),
+                thumbnail_path: path.join('/var/html/media', `${videoId}.jpg`)
+            }}
+        )
 
     })
 }, {connection: redisConfig})

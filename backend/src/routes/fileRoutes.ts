@@ -2,11 +2,8 @@ import { Router } from "express";
 import { authMiddlware } from "../middleware/auth.js";
 import fs from "fs";
 import { userSimilarity, videoSimilarity } from "../rec.js";
-import { and, eq } from "drizzle-orm";
 import { db, likeCollection, videoCollection, viewCollection } from "../mongoClient/db.js";
-import { ObjectId } from 'mongodb';
-import { User, Video, VideoLike, VideoView } from "../mongoClient/schema.js";
-
+import { ObjectId } from "mongodb";
 
 const router = Router();
 
@@ -30,18 +27,18 @@ router.post("/videos", async (req:any , res:any) => {
             rec_videos = await userSimilarity(req.user_id,count,video_data);
         }
         const user_liked = await likeCollection.find(
-            { user_id: new ObjectId(req.user_id) }, 
+            { user_id: req.user_id }, 
             { projection: { video_id: 1, liked: 1 } }
         ).toArray();
         const user_viewed = await viewCollection.find(
-            { user_id: new ObjectId(req.user_id) },
+            { user_id: req.user_id },
             { projection: { video_id: 1, viewed: 1 } }
         ).toArray();
 
         let hashmap = new Map();
         video_data.forEach(video => {
-            hashmap.set(video.id, {
-                id: video.id,
+            hashmap.set(video._id, {
+                id: video._id,
                 title: video.title,
                 description: video.description,
                 likevalues: video.like,
@@ -72,11 +69,14 @@ router.post("/videos", async (req:any , res:any) => {
 router.get("/manifest/:id", async (req: any, res: any) => {
     try{
         const id = req.params.id;
-        const manifestPath = `/var/html/media/${id}.mpd`;
+        const manifestPath = await videoCollection.findOne(
+            {_id:new ObjectId(id)},
+            {projection:{manifest_path:1}}
+        );
 // console.log("ACTUAL manifest path:", manifestPath);
 // console.log("EXISTS?", fs.existsSync(manifestPath));
-        if(fs.existsSync(manifestPath)) 
-            return res.sendFile(manifestPath);
+        if(fs.existsSync(manifestPath!.manifest_path)) 
+            return res.sendFile(manifestPath!.manifest_path);
         return res.status(200).json({status:"ERROR",error:true,message:"manifest not found. for /api/manifest/:id"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from /api/manifest/:id most likely the manifestPath attempt to read does not work"});
@@ -87,10 +87,12 @@ router.get("/manifest/:id", async (req: any, res: any) => {
 router.get("/thumbnail/:id", async (req: any, res: any) => {
     try {
         const id = req.params.id;
-        const thumbnailPath = `/var/html/media/${id}.jpg`;
-// console.log("ACTUAL thumbnail path:", thumbnailPath);
-        if(fs.existsSync(thumbnailPath))
-            return res.sendFile(thumbnailPath);
+        const thumbnailPath = await videoCollection.findOne(
+            {_id:new ObjectId(id)},
+            {projection:{thumbnail_path:1}}
+        );
+        if(fs.existsSync(thumbnailPath!.thumbnail_path))
+            return res.sendFile(thumbnailPath!.thumbnail_path);
         return res.status(200).json({status:"ERROR",error:true,message:"thumbnail not found. for /api/thumbnail/:id"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal server error from api/thumbnail/:id most likely the thumbnailPath attempts to read does not work"});
@@ -113,6 +115,7 @@ router.get("/video/:id", async (req:any, res:any) => {
                 watched: (viewed === null) ? false : true,
                 liked: (user_liked === null) ? null : user_liked.liked,
                 likevalues: video_data.like,
+                manifest_path: video_data.manifest_path.replace("/var/html/media",""),
             }
             return res.status(200).json({status:"OK",vdata:details});
         }
@@ -123,4 +126,17 @@ router.get("/video/:id", async (req:any, res:any) => {
     }
 });
 
+
+//extra 
+router.post("/getFilePath", async (req:any , res:any) => {
+    try {
+        const { videoId } = req.body;
+        const data = await videoCollection.findOne({ _id: new ObjectId(videoId)}, { projection: { thumbnail_path: 1, manifest_path: 1 } });
+        return res.status(200).json({status:"OK", thumbnail_path: data!.thumbnail_path, manifest_path: data!.manifest_path });
+    } catch(err:any){
+        console.log(err);
+        return res.status(200).json({status:"ERROR", error:true, message:`internal server error in /api/getFilePath: ${err.message}`});
+    }
+
+})
 export default router;

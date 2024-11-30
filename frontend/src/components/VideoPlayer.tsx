@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactPlayer from 'react-player'
 import axios from 'axios';
 
 //BONUS: Displaying the like and dislikes prior and post clicking
-const VideoPlayer = ({ vidData,visible }) => {
+const VideoPlayer = ({ vidData, visible }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [viewUpdated, setViewUpdated] = useState(false);
 
+console.log("VIDEOPLAYER PASSEDIN:",vidData)
     const handleView = async() => {// probably do not have to update UI right away
       try {
         const res = await axios.post("https://thewang.cse356.compas.cs.stonybrook.edu/api/view", {id: vidData.id});
@@ -47,7 +48,7 @@ const VideoPlayer = ({ vidData,visible }) => {
         <h1 className='m-0'>{vidData.title}</h1>
         <ReactPlayer 
           playing={isPlaying}
-          url={"/media/"+vidData.id+".mpd"}
+          url={"/media/"+vidData.manifest_path}
           controls={true}
         />
         <div className="flex items-center justify-center gap-24 flex-1 self-stretch">

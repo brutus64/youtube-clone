@@ -1,9 +1,6 @@
 import { Router } from 'express';
 import { authMiddlware } from '../middleware/auth.js';
-import { user } from '../mongoClient/schema.js';
-import { db, userCollection } from '../mongoClient/db.js';
-
-import { eq, and } from 'drizzle-orm';
+import { userCollection } from '../mongoClient/db.js';
 import crypto from 'crypto';
 import { sendEmail } from '../email.js';
 
@@ -17,17 +14,18 @@ router.post('/adduser', async (req: any, res: any) => {
         //check if we already have a user with that email or not
         const user_query = await userCollection.findOne({ email: email });
         //if there is a user already, return error
-        if(user_query === null)
+        if(user_query)
             return res.status(200).json({status: "ERROR",error:true,message:"email already exists"});
 
         //otherwise create a verification key for it and insert into db
         const key = crypto.randomBytes(16).toString("hex");
-        await db.insert(user).values({
-            username: username,
-            password: password,
-            email: email,
-            verification_key: key
-        });
+        await userCollection.insertOne({
+          username:username,
+          password:password,
+          email:email,
+          verification_key:key,
+          disabled:true
+        })
 
         // need to send the email here
         sendEmail(email,key);
@@ -50,15 +48,17 @@ router.get("/verify", async (req: any, res: any) => {
         console.log("decoded_email:",decoded_email);
     
         //check if user has same email and verification key
-        const user_query = await db.select({id:user.id}).from(user).where(
-          and(
-            eq(user.email,decoded_email),
-            eq(user.verification_key, decoded_key)
-          ));
+        const user_query = await userCollection.findOne(
+          {email:decoded_email,verification_key:decoded_key},
+          {projection: {_id:1}}
+        );
         
         //if it does, we update to be enabled account
-        if(user_query.length > 0){
-          await db.update(user).set({disabled:false}).where(eq(user.email, email)); //find the email and set the disabled to false
+        if(user_query){
+          await userCollection.updateOne(
+            {email:email},
+            {$set:{disabled:false}}
+          )
           console.log(email, "updated to have disable: false");
         //   return res.redirect("http://thewang.cse356.compas.cs.stonybrook.edu/");
           return res.send({status:"OK"});
@@ -76,18 +76,15 @@ router.post("/login", async (req: any, res: any) => {
         const { username, password } = req.body;
 
         //check if account matches and is not disabled
-        const user_query = await db.select({id:user.id,username:user.username}).from(user).where(
-            and(
-                eq(user.username, username),
-                eq(user.password,password),
-                eq(user.disabled,false)
-            )
-        )
+        const user_query = await userCollection.findOne(
+          {username:username,password:password,disabled:false},
+          {projection:{_id:1,username:1}}
+        );
         
-        if(user_query.length == 0)
+        if(!user_query)
             return res.status(200).json({status:"ERROR",error:true,message:"Username/Password incorrect"})
         //Set user session to store the user.id and username
-        req.session.user = { id: user_query[0].id, username: user_query[0].username, map: []};
+        req.session.user = { id: user_query._id, username: user_query.username};
         return res.status(200).json({status:"OK"});
     } catch(err) {
         return res.status(200).json({status:"ERROR",error:true,message:"internal error to /login"});

@@ -23,7 +23,7 @@ async function connectToDB() {
 }
 
 export const db = await connectToDB();
-export const userCollection = db.collection<User>("users");
-export const videoCollection = db.collection<Video>("videos");
-export const likeCollection = db.collection<VideoLike>("vid_like");
-export const viewCollection = db.collection<VideoView>("view");
+export const userCollection = db.collection("users");
+export const videoCollection = db.collection("videos");
+export const likeCollection = db.collection("vid_like");
+export const viewCollection = db.collection("view");

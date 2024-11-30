@@ -6,6 +6,7 @@ import userRoutes from './routes/userRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import session from 'express-session';
+import { default as connectMongoDBSession} from 'connect-mongodb-session';
 // import bodyParser from 'body-parser';
 
 //tried clusters it gives a 5 second error for /api/like
@@ -26,6 +27,13 @@ app.use(cors( {
     credentials: true
 }))
 
+const MongoDBStore = connectMongoDBSession(session);
+const store = new MongoDBStore({
+  uri: process.env.DATABASE_URL!,
+  databaseName: "youtube",
+  collection: "user_sessions"
+})
+
 app.use(session({
     secret: 'hufgirh348931jio1', //some string
     saveUninitialized: true,
@@ -34,7 +42,8 @@ app.use(session({
       secure: false, //for http
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
-    }
+    },
+    store:store
 }));
   
 
@@ -80,7 +89,8 @@ async function tryListen(portNum:number) {
   console.log(typeof portNum);
   app.listen(portNum, async () => {
     console.log(`Server listening on port ${portNum}`);
-    await initDB();
+    if (portNum === +port) //only first one intializes
+      await initDB();
   })
   .on('error', (err:any) => {
     if (err.code === 'EADDRINUSE' && portNum < 5030) {
