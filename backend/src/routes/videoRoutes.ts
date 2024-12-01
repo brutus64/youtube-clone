@@ -144,9 +144,9 @@ router.post("/upload", upload.single('mp4File'), async (req:any, res:any) => {
             title: title,
             description: description,
             status: 'processing',
-            like: 0,
-            dislike: 0,
-            views: 0,
+            // like: 0,
+            // dislike: 0,
+            // views: 0,
             uploaded_by: req.user_id,
             manifest_path: "",
             thumbnail_path: ""

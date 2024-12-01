@@ -29,15 +29,17 @@ export const userSimilarity = async (id:any, count:any, all_videos:any) => {
         {}, //filter
         { projection: { _id: 1 } } //fields to return
     ).toArray();
+    
 
     //Video Like query: get all info on videos that have been liked to initialize matrix for cosine similarity
     const all_likes = await likeCollection.find().toArray();
-
+    
     //View query: get all info about viewed videos from this user, used in knowing what videos to leave recommending until the end 
     const avoid_viewed_videos = await viewCollection.find(
         {user_id: id,viewed:true},
         {projection: { video_id: 1 }}
     ).toArray();
+
 
     const avoid_viewed_videos_set = new Set(avoid_viewed_videos.map((v:any) => v.video_id));
 
@@ -112,20 +114,20 @@ export const userSimilarity = async (id:any, count:any, all_videos:any) => {
 
     //2nd Choice: Recommend random unseen videos
     if(rec_videos.length < count) {
-        const unwatched_videos = all_videos.filter((v:any) => !avoid_viewed_videos_set.has(v._id.toString())); //as long as the video is not a video that's viewed already
+        const unwatched_videos = all_videos.filter((v:any) => !avoid_viewed_videos_set.has(v._id)); //as long as the video is not a video that's viewed already
         while(rec_videos.length < count && unwatched_videos.length > 0) {
             const rand_ind = Math.floor(Math.random()*unwatched_videos.length);
-            rec_videos.push(unwatched_videos[rand_ind]._id.toString());
+            rec_videos.push(unwatched_videos[rand_ind]._id);
             unwatched_videos.splice(rand_ind,1); //delete 1 element starting at that index
         }
     }
 
     //3rd Choice: (Final fallback) Recommend random seen videos
     if(rec_videos.length < count) {
-        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v._id.toString())); //as long as its not a rec vid already
+        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v._id)); //as long as its not a rec vid already
         while(rec_videos.length < count && leftover_vid.length > 0){
             const rand_ind = Math.floor(Math.random()*leftover_vid.length);
-            rec_videos.push(leftover_vid[rand_ind]._id.toString());
+            rec_videos.push(leftover_vid[rand_ind]._id);
             leftover_vid.splice(rand_ind,1);
         }
     }
@@ -154,7 +156,7 @@ export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any)
     // Create a matrix with Row: Video ID, Column: User, each cell is -1,0,1 for disliked, null, liked respectively
     const video_matrix: VideoMatrix = {};
     all_videos.forEach((v:any) => {
-        video_matrix[v._id.toString()] = {};
+        video_matrix[v._id] = {};
     });
     
     all_likes.forEach(like => {
@@ -178,8 +180,16 @@ export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any)
     //Compute Cosine Similiarity using the ID's of each row, the scores will be stored with key video id
     const similarities: VideoSimilarities[] = [];
     all_videos.forEach((v:any) => {
-        const vid = v._id.toString();
+        const vid = v._id;
         if(vid !== id) {
+            console.log("First array: ",Object.keys(video_matrix[id])[0]);
+            console.log("Second array: ",Object.keys(video_matrix[vid])[0]);
+            const first = [];
+            const second = [];
+            users.forEach(u => {
+                first.push(video_matrix[id][u._id]);
+                second.push(video_matrix[vid])
+            })
             const similar = similarity(
                 Object.values(video_matrix[id]),
                 Object.values(video_matrix[vid]),
@@ -205,10 +215,10 @@ export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any)
 
     //2nd Choice: Recommend random seen videos
     if(rec_videos.length < count) {
-        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v._id.toString())); //as long as its not a rec vid already
+        const leftover_vid = all_videos.filter((v:any) => !rec_videos.some(rec_vid => rec_vid === v._id)); //as long as its not a rec vid already
         while(rec_videos.length < count && leftover_vid.length > 0){
             const rand_ind = Math.floor(Math.random()*leftover_vid.length);
-            rec_videos.push(leftover_vid[rand_ind]._id.toString());
+            rec_videos.push(leftover_vid[rand_ind]._id);
             leftover_vid.splice(rand_ind,1);
         }
     }

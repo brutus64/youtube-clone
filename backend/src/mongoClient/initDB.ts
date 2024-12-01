@@ -24,6 +24,7 @@ async function reset() {
 async function initUser(){
     const userCollection = db.collection("users");
     await userCollection.insertOne({
+        _id: "init" as any,
         username: 'a',
         email: 'danny.wang.2@stonybrook.edu',
         password: 'a',

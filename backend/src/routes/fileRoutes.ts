@@ -55,7 +55,7 @@ router.post("/videos", async (req:any , res:any) => {
         const details = rec_videos.map((rec_vid_id:string) => {
             return hashmap.get(rec_vid_id.toString());
         });
-
+        // console.log(`Recommendations for ${count} videos using ${videoId ? "video" : "user"} similarity: `, details);
         //any vid_like.user_id,vid_like.video_id combo that doesn't exist in vid_like we can assume the user has never clicked on like or dislike so its null
         //any view.user_id, view.video_id combo that doesn't exist in view, we can assume the user has never watched it before
         res.status(200).json({status:"OK", videos: details});
@@ -108,7 +108,6 @@ router.get("/video/:id", async (req:any, res:any) => {
         const id = req.params.id;
         const video_data = await videoCollection.findOne({ _id: id });
         if(video_data !== null) {
-            console.log("Data for video id ", id, " found");
             const user_liked = await db.collection('vid_like').findOne({video_id: id, user_id: req.user_id});
             const viewed = await db.collection('view').findOne({video_id: id, user_id: req.user_id});
             const details = {

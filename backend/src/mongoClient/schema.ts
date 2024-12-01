@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from 'mongodb';
 export interface User {
-    _id: string;
+    _id: string | ObjectId;
     username: string;
     email: string;
     password: string;

@@ -19,7 +19,9 @@ router.post('/adduser', async (req: any, res: any) => {
 
         //otherwise create a verification key for it and insert into db
         const key = crypto.randomBytes(16).toString("hex");
+        const newId = crypto.randomBytes(24).toString("hex");
         await userCollection.insertOne({
+          _id:newId as any,
           username:username,
           password:password,
           email:email,
