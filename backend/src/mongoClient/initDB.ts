@@ -19,7 +19,9 @@ async function reset() {
     await db.createCollection('view');
     await db.createCollection('user_sessions');
 
-    //TODO Indexes
+    //create/delete indexes
+    await db.collection("vid_like").dropIndexes();
+    await db.collection("vid_like").createIndex({user_id:1,video_id:1},{ unique: true })
 }
 async function initUser(){
     const userCollection = db.collection("users");

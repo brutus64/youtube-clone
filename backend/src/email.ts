@@ -26,11 +26,11 @@ export function sendEmail(email: string, key: string) {
         subject: "Verification Link",
         text: encoded,
     };
-    console.log("MAIL OPTIONS: ",mailOptions);
+    // console.log("MAIL OPTIONS: ",mailOptions);
     transporter.sendMail(mailOptions,function (error:any, info:any) {
       if (error) {
         console.log('Error:', error);
       } else {
-        console.log('Email sent: ' + info.response);
+        // console.log('Email sent: ' + info.response);
       }});
 }

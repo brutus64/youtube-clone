@@ -22,7 +22,6 @@ const VideoPlayer = ({ vidData,visible }) => {
 
     const handlePlayPause = () => { 
         setIsPlaying((prev) => !prev);
-
         //Watched = click play button for the first time
         if (!isPlaying && !vidData.watched && !viewUpdated) {
           setViewUpdated(true);

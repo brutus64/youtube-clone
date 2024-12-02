@@ -72,7 +72,7 @@ router.post("/like", async (req: any, res: any) => {
                 console.log(err);
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
             }
-            
+            res.status(200).json({status: "OK", likes:like_amount + adder});
             
             // await mc.set(id,`${like_amount + adder}`,{ expires:15 });
             //adapt like/dislike count
@@ -81,18 +81,19 @@ router.post("/like", async (req: any, res: any) => {
             } else if (value === false) {
                 await videoCollection.updateOne({ _id: id }, { $inc: { dislike: 1 } });
             }
-            return res.status(200).json({status: "OK", likes:like_amount + adder});
+            return;
         } 
         //Check for Same Value --> Return: Error
         else {
             if(db_like_status === value)
                 return res.status(200).json({status: 'ERROR', error: true, message: "cannot submit the same value in /api/like"});
         }
-
+        let adder = value ? 1 : -1; 
+        res.status(200).json({status: "OK", likes: like_amount + adder})
         //Update the DB with new liked value.
         await likeCollection.updateOne({ user_id: req.user_id, video_id: id},{ $set: { liked: value } });
         //value with like = true means like + 1, value with like = false means like -1
-        let adder = value ? 1 : -1;
+        
         if(value === null)
             adder = db_like_status ? -1 : 1; //if it ends up true --> null then -1, otherwise false from null then +1
         
@@ -107,7 +108,7 @@ router.post("/like", async (req: any, res: any) => {
         } else if (db_like_status === false && value === null) {
             await videoCollection.updateOne({ _id: id },{ $inc: {dislike: -1} });
         }
-        return res.status(200).json({status: "OK", likes: like_amount + adder});
+        return;
         
         
     } catch(err) {

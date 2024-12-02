@@ -182,18 +182,14 @@ export const videoSimilarity = async (id:any, uid:any, count:any,all_videos:any)
     all_videos.forEach((v:any) => {
         const vid = v._id;
         if(vid !== id) {
-            console.log("First array: ",Object.keys(video_matrix[id])[0]);
-            console.log("Second array: ",Object.keys(video_matrix[vid])[0]);
-            const first = [];
-            const second = [];
+            const first:number[] = [];
+            const second:number[] = [];
             users.forEach(u => {
-                first.push(video_matrix[id][u._id]);
-                second.push(video_matrix[vid])
+                const uid = u._id.toString();
+                first.push(video_matrix[id][uid]);
+                second.push(video_matrix[vid][uid]);
             })
-            const similar = similarity(
-                Object.values(video_matrix[id]),
-                Object.values(video_matrix[vid]),
-            )
+            const similar = similarity(first,second)
             if(similar)
                 similarities.push({ video_id: vid, similar});
         }

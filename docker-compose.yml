@@ -7,6 +7,7 @@ services:
     volumes:
       - /root/youtube-clone/db.conf:/etc/mongod.conf
     network_mode: host
+    command: mongod --quiet --logpath /dev/null 
   
   redis:
     image: redis:latest
@@ -43,12 +44,12 @@ services:
     #     condition: service_started
 
     deploy:
-      replicas: 8
+      replicas: 10
       # endpoint_mode: dnsrr
       resources:
         limits:
           # cpus: '1'  # Limit to 1 CPU core
-          memory: 4g   # Limit to 2GB of memory
+          memory: 3g   # Limit to 2GB of memory
 
   frontend:
     build:

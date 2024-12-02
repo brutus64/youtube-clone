@@ -7,7 +7,7 @@ if (!url) {
 }
 
 const client = new MongoClient(url, {
-    maxPoolSize: 100,  // Max number of concurrent connections in the pool
+    maxPoolSize: 75,  // Max number of concurrent connections in the pool
     connectTimeoutMS: 10000  // Timeout for connecting
 });
 

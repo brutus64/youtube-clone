@@ -40,14 +40,14 @@ router.post('/adduser', async (req: any, res: any) => {
 router.get("/verify", async (req: any, res: any) => {
     try{
         const {email, key} = req.query;
-        console.log("email", email);
-        console.log("key", key);
+        // console.log("email", email);
+        // console.log("key", key);
 
         //decode the URI components
         const decoded_key = decodeURIComponent(key);
         const decoded_email = decodeURIComponent(email);
-        console.log("decoded_key:",decoded_key);
-        console.log("decoded_email:",decoded_email);
+        // console.log("decoded_key:",decoded_key);
+        // console.log("decoded_email:",decoded_email);
     
         //check if user has same email and verification key
         const user_query = await userCollection.findOne(
@@ -61,7 +61,7 @@ router.get("/verify", async (req: any, res: any) => {
             {email:email},
             {$set:{disabled:false}}
           )
-          console.log(email, "updated to have disable: false");
+          // console.log(email, "updated to have disable: false");
         //   return res.redirect("http://thewang.cse356.compas.cs.stonybrook.edu/");
           return res.send({status:"OK"});
         }
@@ -97,7 +97,7 @@ router.post("/check-auth", (req:any, res:any) => {
     try{
         // console.log("req from /api/check-auth:", req.session.user);
         if(req.session && req.session.user) {
-          console.log("userId returned:", req.session.user.id);
+          // console.log("userId returned:", req.session.user.id);
           return res.status(200).json({status:"OK", isLoggedIn:true , userId: req.session.user.id});
         }
         return res.status(200).json({status:"OK", isLoggedIn:false , userId: null});
